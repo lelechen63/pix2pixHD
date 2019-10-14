@@ -100,12 +100,21 @@ class Lmark2RGBModel1(BaseModel):
         # real images for training
         if real_image is not None:
             real_image = Variable(real_image.data.cuda())
+        
+        else:
+            print ('=======================')
         if references is not None:
             references = Variable(references.data.cuda())
+        else:
+            print ('=======================')
         if target_lmark is not None:
             target_lmark = Variable(target_lmark.data.cuda())
+        else:
+            print ('=======================')
         if target_ani is not None:
             target_ani = Variable(target_ani.data.cuda())
+        else:
+            print ('=======================')
 
         
         return references, target_lmark, target_ani, real_image
