@@ -4,11 +4,11 @@ from data.base_data_loader import BaseDataLoader
 
 def CreateDataset(opt):
     dataset = None
-    from data.aligned_dataset import AlignedDataset
-    dataset = AlignedDataset()
+    from data.dataset import Lmark2rgbDataset
+    dataset = Lmark2rgbDataset(opt)
 
     print("dataset [%s] was created" % (dataset.name()))
-    dataset.initialize(opt)
+    # dataset.__init__(opt)
     return dataset
 
 class CustomDatasetDataLoader(BaseDataLoader):
@@ -21,7 +21,7 @@ class CustomDatasetDataLoader(BaseDataLoader):
         self.dataloader = torch.utils.data.DataLoader(
             self.dataset,
             batch_size=opt.batchSize,
-            shuffle=not opt.serial_batches,
+            shuffle = not opt.serial_batches,
             num_workers=int(opt.nThreads))
 
     def load_data(self):

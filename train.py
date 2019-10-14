@@ -57,8 +57,7 @@ for epoch in range(start_epoch, opt.niter + opt.niter_decay + 1):
         save_fake = total_steps % opt.display_freq == display_delta
 
         ############## Forward Pass ######################
-        losses, generated = model(Variable(data['label']), Variable(data['inst']), 
-            Variable(data['image']), Variable(data['feat']), infer=save_fake)
+        losses, generated = model(Variable(data['reference_frames']), Variable(data['target_lmark']), Variable(data['target_ani']), Variable(data['target_rgb']), infer=save_fake)
 
         # sum per device losses
         losses = [ torch.mean(x) if not isinstance(x, int) else x for x in losses ]
@@ -83,17 +82,23 @@ for epoch in range(start_epoch, opt.niter + opt.niter_decay + 1):
 
         ############## Display results and errors ##########
         ### print out errors
+        # print   (loss_dict['D_fake'], loss_dict['D_real'],  loss_dict['G_GAN'],  loss_dict.get('G_GAN_Feat',0),  loss_dict.get('G_VGG',0)) 
+        errors = {}
         if total_steps % opt.print_freq == print_delta:
-            errors = {k: v.data[0] if not isinstance(v, int) else v for k, v in loss_dict.items()}
+            for k, v in loss_dict.items():
+                # print (k,v)
+                errors[k] = v.item()
+            # errors = {k: v.data[0] if not isinstance(v, int) else v for k, v in loss_dict.items()}
             t = (time.time() - iter_start_time) / opt.batchSize
             visualizer.print_current_errors(epoch, epoch_iter, errors, t)
             visualizer.plot_current_errors(errors, total_steps)
 
         ### display output images
         if save_fake:
-            visuals = OrderedDict([('input_label', util.tensor2label(data['label'][0], opt.label_nc)),
+            visuals = OrderedDict([('target_lmark', util.tensor2im(data['target_lmark'][0])),
+                                   ('target_ani', util.tensor2im(data['target_ani'][0])),
                                    ('synthesized_image', util.tensor2im(generated.data[0])),
-                                   ('real_image', util.tensor2im(data['image'][0]))])
+                                   ('real_image', util.tensor2im(data['target_rgb'][0]))])
             visualizer.display_current_results(visuals, epoch, total_steps)
 
         ### save latest model

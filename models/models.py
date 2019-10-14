@@ -9,6 +9,18 @@ def create_model(opt):
             model = Pix2PixHDModel()
         else:
             model = InferenceModel()
+    elif opt.model == 'base1':
+        from .Lmark2RGB_model import Lmark2RGBModel1, InferenceModel1
+        if opt.isTrain:
+            model = Lmark2RGBModel1()
+        else:
+            model = InferenceModel1()
+    elif opt.model == 'base2':
+        from .Lmark2RGB_model import Lmark2RGBModel2, InferenceModel2
+        if opt.isTrain:
+            model = Lmark2RGBModel2()
+        else:
+            model = InferenceModel2()
     else:
     	from .ui_model import UIModel
     	model = UIModel()
