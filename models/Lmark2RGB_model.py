@@ -170,7 +170,7 @@ class Lmark2RGBModel1(BaseModel):
         # Only return the fake_B image if necessary to save BW
         return [ self.loss_filter( loss_G_GAN, loss_G_GAN_Feat, loss_G_VGG, loss_D_real, loss_D_fake, loss_G_CNT, loss_G_PIX ), None if not infer else fake_image ]
 
-    def inference(self, references, target_lmark, target_ani, image=None):
+    def inference(self, references, target_lmark, target_ani, image):
         # Encode Inputs        
         image = Variable(image) if image is not None else None
         references, target_lmark, target_ani, real_image  = self.encode_input(Vreferences, target_lmark, target_ani, image , infer=True)
