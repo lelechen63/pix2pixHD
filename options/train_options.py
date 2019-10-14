@@ -30,7 +30,8 @@ class TrainOptions(BaseOptions):
         self.parser.add_argument('--lambda_feat', type=float, default=10.0, help='weight for feature matching loss')                
         self.parser.add_argument('--no_ganFeat_loss', action='store_true', help='if specified, do *not* use discriminator feature matching loss')
         self.parser.add_argument('--no_vgg_loss', action='store_true', help='if specified, do *not* use VGG feature matching loss')      
-        self.parser.add_argument('--no_face_loss', action='store_true', help='if specified, do *not* use VGG feature matching loss')   
+        self.parser.add_argument('--no_face_loss', action='store_true', help='if specified, do *not* use VGG face feature matching loss')  
+        self.parser.add_argument('--no_pixel_loss', action='store_true', help='if specified, do *not* use pixel loss') 
         self.parser.add_argument('--no_lsgan', action='store_true', help='do *not* use least square GAN, if false, use vanilla GAN')
         self.parser.add_argument('--pool_size', type=int, default=0, help='the size of image buffer that stores previously generated images')
 

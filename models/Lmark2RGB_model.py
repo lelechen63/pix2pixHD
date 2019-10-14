@@ -12,10 +12,10 @@ class Lmark2RGBModel1(BaseModel):
     def name(self):
         return 'base1'
     
-    def init_loss_filter(self, use_gan_feat_loss, use_vgg_loss, use_face_loss):
-        flags = (True, use_gan_feat_loss, use_vgg_loss, True, True, use_face_loss)
-        def loss_filter(g_gan, g_gan_feat, g_vgg, d_real, d_fake, g_cnt):
-            return [l for (l,f) in zip((g_gan,g_gan_feat,g_vgg,d_real,d_fake, g_cnt),flags) if f]
+    def init_loss_filter(self, use_gan_feat_loss, use_vgg_loss, use_face_loss, use_pix_loss):
+        flags = (True, use_gan_feat_loss, use_vgg_loss, True, True, use_face_loss, use_pix_loss)
+        def loss_filter(g_gan, g_gan_feat, g_vgg, d_real, d_fake, g_cnt, g_pix):
+            return [l for (l,f) in zip((g_gan,g_gan_feat,g_vgg,d_real,d_fake, g_cnt, g_pix),flags) if f]
         return loss_filter
     
     def initialize(self, opt):
@@ -51,19 +51,22 @@ class Lmark2RGBModel1(BaseModel):
             self.old_lr = opt.lr
 
             # define loss functions
-            self.loss_filter = self.init_loss_filter(not opt.no_ganFeat_loss, not opt.no_vgg_loss, not opt.no_face_loss)
+            self.loss_filter = self.init_loss_filter(not opt.no_ganFeat_loss, not opt.no_vgg_loss, not opt.no_face_loss , not opt.no_pixel_loss)
             
             self.criterionGAN = networks.GANLoss(use_lsgan=not opt.no_lsgan, tensor=self.Tensor)   
             self.criterionFeat = torch.nn.L1Loss()
             if not opt.no_vgg_loss:             
                 self.criterionVGG = networks.VGGLoss(self.gpu_ids)
 
+            if not opt.no_pixel_loss:             
+                self.criterionPix = networks.PixLoss(self.gpu_ids)
+
             if not opt.no_face_loss:             
                 self.criterionCNT = networks.LossCnt(self.opt)
                 
         
             # Names so we can breakout loss
-            self.loss_names = self.loss_filter('G_GAN','G_GAN_Feat','G_VGG','D_real', 'D_fake', 'G_CNT')
+            self.loss_names = self.loss_filter('G_GAN','G_GAN_Feat','G_VGG','D_real', 'D_fake', 'G_CNT', 'G_PIX')
 
             # initialize optimizers
             # optimizer G
@@ -152,9 +155,12 @@ class Lmark2RGBModel1(BaseModel):
 
         if not self.opt.no_face_loss:
             loss_G_CNT = self.criterionCNT(real_image, fake_image) 
+
+        if not self.opt.no_pixel_loss:
+            loss_G_PIX = self.criterionPix(real_image, fake_image) 
         
         # Only return the fake_B image if necessary to save BW
-        return [ self.loss_filter( loss_G_GAN, loss_G_GAN_Feat, loss_G_VGG, loss_D_real, loss_D_fake, loss_G_CNT ), None if not infer else fake_image ]
+        return [ self.loss_filter( loss_G_GAN, loss_G_GAN_Feat, loss_G_VGG, loss_D_real, loss_D_fake, loss_G_CNT, loss_G_PIX ), None if not infer else fake_image ]
 
     def inference(self, references, target_lmark, target_ani, image=None):
         # Encode Inputs        

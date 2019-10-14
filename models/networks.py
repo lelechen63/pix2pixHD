@@ -130,6 +130,14 @@ class VGGLoss(nn.Module):
             loss += self.weights[i] * self.criterion(x_vgg[i], y_vgg[i].detach())        
         return loss
 
+class PixLoss(nn.Module):
+    def __init__(self, gpu_ids):
+        super(PixLoss, self).__init__()        
+        self.criterion = nn.L1Loss()
+
+    def forward(self, x, y):              
+        loss =   self.criterion(x, y.detach())        
+        return loss
 ##############################################################################
 # Generator
 ##############################################################################
