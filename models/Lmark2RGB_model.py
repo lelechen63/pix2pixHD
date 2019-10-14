@@ -100,7 +100,6 @@ class Lmark2RGBModel1(BaseModel):
         # real images for training
         if real_image is not None:
             real_image = Variable(real_image.data.cuda())
-        
         else:
             print ('=======================')
         if references is not None:
