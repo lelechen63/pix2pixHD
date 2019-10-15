@@ -35,7 +35,7 @@ def get_norm_layer(norm_type='instance'):
 def define_G(input_nc, output_nc, netG, pad_type,  norm='instance', gpu_ids=[]):    
     norm_layer = get_norm_layer(norm_type=norm)     
     if netG == 'global':    
-        netG = GlobalGenerator( output_nc, pad_type, norm_layer)       
+        netG = GlobalGenerator( input_nc, output_nc, pad_type, norm_layer)       
     elif netG == 'local':        
         netG = LocalEnhancer(input_nc, output_nc, ngf, n_downsample_global, n_blocks_global, 
                                   n_local_enhancers, n_blocks_local, norm_layer)
