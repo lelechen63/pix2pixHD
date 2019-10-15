@@ -36,7 +36,7 @@ class Visualizer():
             log_file.write('================ Training Loss (%s) ================\n' % now)
 
     # |visuals|: dictionary of images to display or save
-    def display_current_results(self, visuals, epoch, step):
+    def display_current_results(self, visuals, epoch, step, video_path, reference_ids, target_id):
         if self.tf_log: # show images in tensorboard output
             img_summaries = []
             for label, image_numpy in visuals.items():
@@ -68,7 +68,7 @@ class Visualizer():
             # update website
             webpage = html.HTML(self.web_dir, 'Experiment name = %s' % self.name, refresh=30)
             for n in range(epoch, 0, -1):
-                webpage.add_header('epoch [%d]' % n)
+                webpage.add_header('epoch:{}, video_path:{}, ref_ids:{}, gt_id:{}'.format(n, video_path, reference_ids, target_id))
                 ims = []
                 txts = []
                 links = []

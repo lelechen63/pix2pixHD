@@ -106,7 +106,7 @@ for epoch in range(start_epoch, opt.niter + opt.niter_decay + 1):
                                    ('target_ani', util.tensor2im(data['target_ani'][0])),
                                    ('synthesized_image', util.tensor2im(generated.data[0])),
                                    ('real_image', util.tensor2im(data['target_rgb'][0]))])
-            visualizer.display_current_results(visuals, epoch, total_steps)
+            visualizer.display_current_results(visuals, epoch, total_steps, data['v_id'], data['reference_ids'], data['target_id'] )
 
         ### save latest model
         if total_steps % opt.save_latest_freq == save_delta:

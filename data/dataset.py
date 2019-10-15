@@ -143,7 +143,7 @@ class Lmark2rgbDataset(Dataset):
 
 
         input_dic = {'v_id' : v_id, 'target_lmark': target_lmark, 'reference_frames': reference_frames,
-        'target_rgb': target_rgb, 'target_ani': target_ani
+        'target_rgb': target_rgb, 'target_ani': target_ani, 'reference_ids':input_indexs, 'target_id': target_id
         }
         return input_dic
 
