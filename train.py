@@ -57,7 +57,10 @@ for epoch in range(start_epoch, opt.niter + opt.niter_decay + 1):
         save_fake = total_steps % opt.display_freq == display_delta
 
         ############## Forward Pass ######################
-        losses, generated = model(Variable(data['reference_frames']), Variable(data['target_lmark']), Variable(data['target_ani']), Variable(data['target_rgb']), infer=save_fake)
+        if opt.no_ani:
+            losses, generated = model(Variable(data['reference_frames']), Variable(data['target_lmark']), None,  Variable(data['target_rgb']), infer=save_fake)
+        else:
+            losses, generated = model(Variable(data['reference_frames']), Variable(data['target_lmark']), Variable(data['target_ani']), Variable(data['target_rgb']), infer=save_fake)
 
         # sum per device losses
         losses = [ torch.mean(x) if not isinstance(x, int) else x for x in losses ]
@@ -95,7 +98,11 @@ for epoch in range(start_epoch, opt.niter + opt.niter_decay + 1):
 
         ### display output images
         if save_fake:
-            visuals = OrderedDict([('target_lmark', util.tensor2im(data['target_lmark'][0])),
+            visuals = OrderedDict([('reference1', util.tensor2im(data['references'][0, 0,:3]),
+                                    ('reference2', util.tensor2im(data['references'][0, 1,:3]),
+                                    ('reference3', util.tensor2im(data['references'][0, 2,:3]),
+                                    ('reference4', util.tensor2im(data['references'][0, 3,:3]),
+                                   ('target_lmark', util.tensor2im(data['target_lmark'][0])),
                                    ('target_ani', util.tensor2im(data['target_ani'][0])),
                                    ('synthesized_image', util.tensor2im(generated.data[0])),
                                    ('real_image', util.tensor2im(data['target_rgb'][0]))])

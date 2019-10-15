@@ -8,6 +8,8 @@ from util.image_pool import ImagePool
 from .base_model import BaseModel
 from . import networks
 
+
+#### with landmark + 3d ani
 class Lmark2RGBModel1(BaseModel):
     def name(self):
         return 'base1'
@@ -21,10 +23,13 @@ class Lmark2RGBModel1(BaseModel):
     def initialize(self, opt):
         BaseModel.initialize(self, opt)
         self.isTrain = opt.isTrain
-        input_nc = 6 #(lmark + ani), put is together
+        if opt.no_ani:
+            input_nc = 3 
+        else:
+            input_nc = 6#(lmark + ani), put is together
         ##### define networks        
         # Generator network
-        self.netG = networks.define_G(output_nc =opt.output_nc,netG = opt.netG, pad_type='reflect',norm = opt.norm, gpu_ids=self.gpu_ids)          
+        self.netG = networks.define_G(input_nc = input_nc, output_nc =opt.output_nc,netG = opt.netG, pad_type='reflect',norm = opt.norm, gpu_ids=self.gpu_ids)          
 
         # Discriminator network
         if self.isTrain:
@@ -112,14 +117,18 @@ class Lmark2RGBModel1(BaseModel):
             print ('=======================')
         if target_ani is not None:
             target_ani = Variable(target_ani.data.cuda())
+            g_in = torch.cat([target_lmark, target_ani], 1)
+
         else:
+
+            g_in = target_lmark
             print ('=======================')
 
         
-        return references, target_lmark, target_ani, real_image
+        return references, target_lmark, target_ani, real_image, g_in
 
-    def discriminate(self,  target_lmark, target_ani, test_image, use_pool=False):
-        input_concat = torch.cat(( target_lmark, target_ani, test_image.detach()), dim=1)
+    def discriminate(self,  g_in, test_image, use_pool=False):
+        input_concat = torch.cat(( g_in, test_image.detach()), dim=1)
         if use_pool:            
             fake_query = self.fake_pool.query(input_concat)
             return self.netD.forward(fake_query)
@@ -128,22 +137,22 @@ class Lmark2RGBModel1(BaseModel):
 
     def forward(self, references, target_lmark, target_ani, real_image, infer=False):
         # Encode Inputs
-        references, target_lmark, target_ani, real_image = self.encode_input(references, target_lmark, target_ani, real_image,infer)  
+        references, target_lmark, target_ani, real_image , g_in= self.encode_input(references = references, target_lmark = target_lmark, target_ani = target_ani, real_image = real_image,infer= infer)  
 
         # Fake Generation
         
-        fake_image = self.netG.forward(references, target_lmark, target_ani)
+        fake_image = self.netG.forward(references, g_in)
 
         # Fake Detection and Loss
-        pred_fake_pool = self.discriminate( target_lmark, target_ani, fake_image, use_pool=True)
+        pred_fake_pool = self.discriminate( g_in, fake_image, use_pool=True)
         loss_D_fake = self.criterionGAN(pred_fake_pool, False)        
 
         # Real Detection and Loss        
-        pred_real = self.discriminate( target_lmark, target_ani, real_image)
+        pred_real = self.discriminate( g_in, real_image)
         loss_D_real = self.criterionGAN(pred_real, True)
 
         # GAN loss (Fake Passability Loss)        
-        pred_fake = self.netD.forward(torch.cat(( target_lmark, target_ani, fake_image), dim=1))        
+        pred_fake = self.netD.forward(torch.cat(( g_in, fake_image), dim=1))        
         loss_G_GAN = self.criterionGAN(pred_fake, True)               
         
         # GAN feature matching loss
@@ -160,10 +169,11 @@ class Lmark2RGBModel1(BaseModel):
         loss_G_VGG = 0
         if not self.opt.no_vgg_loss:
             loss_G_VGG = self.criterionVGG(fake_image, real_image) * self.opt.lambda_feat
-
+        loss_G_CNT = 0
         if not self.opt.no_face_loss:
             loss_G_CNT = self.criterionCNT(real_image, fake_image) 
 
+        loss_G_PIX= 0
         if not self.opt.no_pixel_loss:
             loss_G_PIX = self.criterionPix(real_image, fake_image) 
         
@@ -173,14 +183,14 @@ class Lmark2RGBModel1(BaseModel):
     def inference(self, references, target_lmark, target_ani, image):
         # Encode Inputs        
         image = Variable(image) if image is not None else None
-        references, target_lmark, target_ani, real_image  = self.encode_input(Vreferences, target_lmark, target_ani, image , infer=True)
+        references, target_lmark, target_ani, real_image , g_in = self.encode_input(Vreferences, target_lmark, target_ani, image , infer=True)
 
         # Fake Generation           
         if torch.__version__.startswith('0.4'):
             with torch.no_grad():
-                fake_image = self.netG.forward(references, target_lmark, target_ani)
+                fake_image = self.netG.forward(references, g_in)
         else:
-            fake_image = self.netG.forward(references, target_lmark, target_ani)
+            fake_image = self.netG.forward(references, g_in)
         return fake_image
 
 
@@ -213,5 +223,3 @@ class InferenceModel1(Lmark2RGBModel1):
     def forward(self, inp):
         references, target_lmark, target_ani, image = inp
         return self.inference(references, target_lmark, target_ani, image)
-
-        

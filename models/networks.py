@@ -383,6 +383,110 @@ class GlobalGenerator(nn.Module):
         image = self.decoder(feature)
         return image
 
+class GlobalGenerator_mfcc(nn.Module):
+    def __init__(self,output_nc, pad_type='reflect', norm_layer=nn.BatchNorm2d, ngf = 64):
+        super(GlobalGenerator_mfcc, self).__init__()        
+        activ = 'relu'    
+        model = [nn.ReflectionPad2d(3), nn.Conv2d(6, ngf, kernel_size=7, padding=0), norm_layer(ngf), nn.ReLU(True) ]
+        ### downsample
+        model += [Conv2dBlock(64, 128, 4, 2, 1,           # 128, 128, 128 
+                                       norm= 'in',
+                                       activation=activ,
+                                       pad_type=pad_type)]
+
+        model += [Conv2dBlock(128, 128, 4, 2, 1,           # 128, 64 
+                                       norm= 'in',
+                                       activation=activ,
+                                       pad_type=pad_type)]
+        model += [Conv2dBlock(128, 256, 4, 2, 1,           # 256 32 
+                                       norm= 'in',
+                                       activation=activ,
+                                       pad_type=pad_type)]
+
+        model += [Conv2dBlock(256, 256, 4, 2, 1,           # 256 16
+                                       norm= 'in',
+                                       activation=activ,
+                                       pad_type=pad_type)]
+        model += [Conv2dBlock(256, 512, 4, 2, 1,           # 512 8
+                                       norm= 'in',
+                                       activation=activ,
+                                       pad_type=pad_type)]
+
+        model += [Conv2dBlock(512, 512, 4, 2, 1,           # 512 4
+                                       norm= 'in',
+                                       activation=activ,
+                                       pad_type=pad_type)]
+
+
+        self.lmark_ani_encoder = nn.Sequential(*model)
+        model = []
+        ###  adain resnet blocks
+        model += [ResBlocks(2, 512, norm  = 'adain', activation=activ, pad_type='reflect')]
+
+        ### upsample         
+        model += [nn.Upsample(scale_factor=2),
+                        Conv2dBlock(512, 512, 5, 1, 2,
+                                    norm='in',
+                                    activation=activ,
+                                    pad_type=pad_type)]    # 512, 8 , 8 
+        model += [nn.Upsample(scale_factor=2),
+                        Conv2dBlock(512, 512, 5, 1, 2,
+                                    norm='in',
+                                    activation=activ,
+                                    pad_type=pad_type)] # 512, 16 , 16 
+        model += [nn.Upsample(scale_factor=2),
+                        Conv2dBlock(512, 256, 5, 1, 2,
+                                    norm='in',
+                                    activation=activ,
+                                    pad_type=pad_type)] # 256, 32, 32 
+        model += [nn.Upsample(scale_factor=2),
+                        Conv2dBlock(256, 256, 5, 1, 2,
+                                    norm='in',
+                                    activation=activ,
+                                    pad_type=pad_type)] # 256, 64, 64 
+        model += [nn.Upsample(scale_factor=2), 
+                        Conv2dBlock(256, 128, 5, 1, 2,
+                                    norm='in',
+                                    activation=activ,
+                                    pad_type=pad_type)]  # 128, 128, 128 
+        model += [nn.Upsample(scale_factor=2), 
+                        Conv2dBlock(128, 64, 5, 1, 2,
+                                    norm='in',
+                                    activation=activ,
+                                    pad_type=pad_type)]  # 64, 256, 256 
+        model += [Conv2dBlock(64, 3, 7, 1, 3,
+                                   norm='none',
+                                   activation='tanh',
+                                   pad_type=pad_type)]
+        self.decoder = nn.Sequential(*model)
+
+
+        self.embedder = Embedder()
+
+
+        self.mlp = MLP(512,
+                       get_num_adain_params(self.decoder),
+                       256,
+                       3,
+                       norm='none',
+                       activ='relu')
+
+
+    def forward(self, references, target_lmark, target_ani, mfcc):
+        dims = references.shape
+        references = references.reshape( dims[0] * dims[1], dims[2], dims[3], dims[4]  )
+        e_vectors = self.embedder(references).reshape(dims[0] , dims[1], -1)
+        e_hat = e_vectors.mean(dim = 1)
+
+        g_in = torch.cat([target_lmark, target_ani], 1)
+
+        feature = self.lmark_ani_encoder(g_in)
+
+        # Decode
+        adain_params = self.mlp(e_hat)
+        assign_adain_params(adain_params, self.decoder)
+        image = self.decoder(feature)
+        return image
 
 
 class MultiscaleDiscriminator(nn.Module):
