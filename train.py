@@ -98,10 +98,10 @@ for epoch in range(start_epoch, opt.niter + opt.niter_decay + 1):
 
         ### display output images
         if save_fake:
-            visuals = OrderedDict([('reference1', util.tensor2im(data['references'][0, 0,:3])),
-                                    ('reference2', util.tensor2im(data['references'][0, 1,:3])),
-                                    ('reference3', util.tensor2im(data['references'][0, 2,:3])),
-                                    ('reference4', util.tensor2im(data['references'][0, 3,:3])),
+            visuals = OrderedDict([('reference1', util.tensor2im(data['reference_frames'][0, 0,:3])),
+                                    ('reference2', util.tensor2im(data['reference_frames'][0, 1,:3])),
+                                    ('reference3', util.tensor2im(data['reference_frames'][0, 2,:3])),
+                                    ('reference4', util.tensor2im(data['reference_frames'][0, 3,:3])),
                                    ('target_lmark', util.tensor2im(data['target_lmark'][0])),
                                    ('target_ani', util.tensor2im(data['target_ani'][0])),
                                    ('synthesized_image', util.tensor2im(generated.data[0])),
