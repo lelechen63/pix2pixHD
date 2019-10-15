@@ -93,8 +93,10 @@ class Lmark2rgbDataset(Dataset):
         input_indexs  = set(random.sample(range(0,64), self.num_frames))
 
         # we randomly choose a target frame 
-        target_id =  np.random.choice([0, v_length - 1])
-            
+        while True:
+            target_id =  np.random.choice([0, v_length - 1])
+            if target_id not in input_indexs:
+                break
         reference_frames = []
         for t in input_indexs:
             rgb_t =  mmcv.bgr2rgb(real_video[t]) 
