@@ -32,7 +32,7 @@ def get_norm_layer(norm_type='instance'):
         raise NotImplementedError('normalization layer [%s] is not found' % norm_type)
     return norm_layer
 
-def define_G( output_nc, netG, pad_type,  norm='instance', gpu_ids=[]):    
+def define_G(input_nc, output_nc, netG, pad_type,  norm='instance', gpu_ids=[]):    
     norm_layer = get_norm_layer(norm_type=norm)     
     if netG == 'global':    
         netG = GlobalGenerator( output_nc, pad_type, norm_layer)       
@@ -279,10 +279,10 @@ def get_num_adain_params(model):
             num_adain_params += 2*m.num_features
     return num_adain_params
 class GlobalGenerator(nn.Module):
-    def __init__(self,output_nc, pad_type='reflect', norm_layer=nn.BatchNorm2d, ngf = 64):
+    def __init__(self,input_nc, output_nc, pad_type='reflect', norm_layer=nn.BatchNorm2d, ngf = 64):
         super(GlobalGenerator, self).__init__()        
         activ = 'relu'    
-        model = [nn.ReflectionPad2d(3), nn.Conv2d(6, ngf, kernel_size=7, padding=0), norm_layer(ngf), nn.ReLU(True) ]
+        model = [nn.ReflectionPad2d(3), nn.Conv2d(input_nc, ngf, kernel_size=7, padding=0), norm_layer(ngf), nn.ReLU(True) ]
         ### downsample
         model += [Conv2dBlock(64, 128, 4, 2, 1,           # 128, 128, 128 
                                        norm= 'in',
@@ -367,13 +367,13 @@ class GlobalGenerator(nn.Module):
                        activ='relu')
 
 
-    def forward(self, references, target_lmark, target_ani):
+    def forward(self, references, g_in):
         dims = references.shape
         references = references.reshape( dims[0] * dims[1], dims[2], dims[3], dims[4]  )
         e_vectors = self.embedder(references).reshape(dims[0] , dims[1], -1)
         e_hat = e_vectors.mean(dim = 1)
 
-        g_in = torch.cat([target_lmark, target_ani], 1)
+        
 
         feature = self.lmark_ani_encoder(g_in)
 
