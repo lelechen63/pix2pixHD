@@ -105,26 +105,15 @@ class Lmark2RGBModel1(BaseModel):
         # real images for training
         if real_image is not None:
             real_image = Variable(real_image.data.cuda())
-        else:
-            print ('=======================')
         if references is not None:
             references = Variable(references.data.cuda())
-        else:
-            print ('=======================')
         if target_lmark is not None:
             target_lmark = Variable(target_lmark.data.cuda())
-        else:
-            print ('=======================')
         if target_ani is not None:
             target_ani = Variable(target_ani.data.cuda())
             g_in = torch.cat([target_lmark, target_ani], 1)
-
         else:
-
             g_in = target_lmark
-            print ('=======================')
-
-        
         return references, target_lmark, target_ani, real_image, g_in
 
     def discriminate(self,  g_in, test_image, use_pool=False):
