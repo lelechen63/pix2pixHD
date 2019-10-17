@@ -58,9 +58,9 @@ for epoch in range(start_epoch, opt.niter + opt.niter_decay + 1):
 
         ############## Forward Pass ######################
         if opt.no_ani:
-            losses, generated = model(Variable(data['reference_frames']), Variable(data['target_lmark']), None,  Variable(data['target_rgb']), infer=save_fake)
+            losses, generated = model(references =Variable(data['reference_frames']),target_lmark= Variable(data['target_lmark']),target_ani=  None,real_image=  Variable(data['target_rgb']), infer=save_fake)
         else:
-            losses, generated = model(Variable(data['reference_frames']), Variable(data['target_lmark']), Variable(data['target_ani']), Variable(data['target_rgb']), infer=save_fake)
+            losses, generated = model(references =Variable(data['reference_frames']),target_lmark= Variable(data['target_lmark']),target_ani=   Variable(data['target_ani']),real_image=  Variable(data['target_rgb']), infer=save_fake)
 
         # sum per device losses
         losses = [ torch.mean(x) if not isinstance(x, int) else x for x in losses ]
