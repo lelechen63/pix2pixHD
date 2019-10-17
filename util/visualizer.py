@@ -68,12 +68,12 @@ class Visualizer():
             # update website
             webpage = html.HTML(self.web_dir, 'Experiment name = %s' % self.name, refresh=30)
             for n in range(epoch, 0, -1):
-                webpage.add_header('epoch:{}, video_path:{}, ref_ids:{}, gt_id:{}'.format(n, str(video_path).split(',')[0], str(reference_ids).split('}')[0], str(target_id).split(',')[0]))
                 ims = []
                 txts = []
                 links = []
 
                 for label, image_numpy in visuals.items():
+                    webpage.add_header('epoch:{}, video_path:{}, ref_ids:{}, gt_id:{}'.format(n, str(video_path).split(',')[0], str(reference_ids).split('}')[0], str(target_id).split(',')[0]))
                     if isinstance(image_numpy, list):
                         for i in range(len(image_numpy)):
                             img_path = 'epoch%.3d_%s_%d.jpg' % (n, label, i)
