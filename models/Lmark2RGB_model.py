@@ -172,7 +172,7 @@ class Lmark2RGBModel1(BaseModel):
     def inference(self, references, target_lmark, target_ani, image):
         # Encode Inputs        
         image = Variable(image) if image is not None else None
-        references, target_lmark, target_ani, real_image , g_in = self.encode_input(Vreferences, target_lmark, target_ani, image , infer=True)
+        references, target_lmark, target_ani, real_image , g_in = self.encode_input(references, target_lmark, target_ani, image , infer=True)
 
         # Fake Generation           
         if torch.__version__.startswith('0.4'):
