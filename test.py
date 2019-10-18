@@ -35,7 +35,6 @@ for i, data in enumerate(dataset):
         generated = model.inference(Variable(data['reference_frames']), Variable(data['target_lmark']), None,  Variable(data['target_rgb']))
     else:
         generated = model.inference(Variable(data['reference_frames']), Variable(data['target_lmark']),  Variable(data['target_ani']),  Variable(data['target_rgb']))
-    print(generated.shape)
     visuals = OrderedDict([('reference1', util.tensor2im(data['reference_frames'][0, 0,:3])),
                                     ('reference2', util.tensor2im(data['reference_frames'][0, 1,:3])),
                                     ('reference3', util.tensor2im(data['reference_frames'][0, 2,:3])),

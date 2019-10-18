@@ -104,13 +104,13 @@ class Lmark2RGBModel1(BaseModel):
         
         # real images for training
         if real_image is not None:
-            real_image = Variable(real_image.data.cuda())
+            real_image = Variable(real_image.data.cuda(non_blocking=True))
         if references is not None:
-            references = Variable(references.data.cuda())
+            references = Variable(references.data.cuda(non_blocking=True))
         if target_lmark is not None:
-            target_lmark = Variable(target_lmark.data.cuda())
+            target_lmark = Variable(target_lmark.data.cuda(non_blocking=True))
         if target_ani is not None:
-            target_ani = Variable(target_ani.data.cuda())
+            target_ani = Variable(target_ani.data.cuda(non_blocking=True))
             g_in = torch.cat([target_lmark, target_ani], 1)
         else:
             g_in = target_lmark

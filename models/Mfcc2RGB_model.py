@@ -10,7 +10,7 @@ from . import networks
 
 class Mfcc2RGBModel1(BaseModel):
     def name(self):
-        return 'base1'
+        return 'audio_base1'
     
     def init_loss_filter(self, use_gan_feat_loss, use_vgg_loss, use_face_loss, use_pix_loss):
         flags = (True, use_gan_feat_loss, use_vgg_loss, True, True, use_face_loss, use_pix_loss)

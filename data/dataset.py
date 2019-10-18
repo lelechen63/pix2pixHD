@@ -43,14 +43,14 @@ class Lmark2rgbDataset(Dataset):
         self.root  = opt.dataroot
 
         if opt.isTrain:
-            _file = open(os.path.join(self.root, 'txt',  "front_rt2.pkl"), "rb")
+            _file = open(os.path.join(self.root, 'txt',  "train_front_rt2.pkl"), "rb")
             # self.data = pkl.load(_file)
             self.data = pkl._Unpickler(_file)
             self.data.encoding = 'latin1'
             self.data = self.data.load()
             _file.close()
         else:
-            _file = open(os.path.join(self.root, 'txt', "train_front_rt2.pkl"), "rb")
+            _file = open(os.path.join(self.root, 'txt', "front_rt2.pkl"), "rb")
             self.data = pkl._Unpickler(_file)
             self.data.encoding = 'latin1'
             self.data = self.data.load()
