@@ -15,7 +15,7 @@ from torch.utils.data import Dataset
 import torch
 import torchvision.transforms as transforms
 import mmcv
-cv2.setNumThreads(0)
+# cv2.setNumThreads(0)
 
 
  
