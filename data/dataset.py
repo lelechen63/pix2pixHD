@@ -6,7 +6,6 @@ import random
 import PIL
 import cv2
 import matplotlib
-cv2.setNumThreads(0)
 # matplotlib.use('pdf')
 import matplotlib.pyplot as plt
 
@@ -16,6 +15,7 @@ from torch.utils.data import Dataset
 import torch
 import torchvision.transforms as transforms
 import mmcv
+cv2.setNumThreads(0)
 
 
  
