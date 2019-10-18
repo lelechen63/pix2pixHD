@@ -54,12 +54,3 @@ for i, data in enumerate(dataset):
 webpage.save()
 
 
-v_id = 'test_video/id00061/cAT9aR8oFx0/00141'
-reference_id = 542
-
-
-v_id = 'test_video/id00061/1P5c4NQjGZY/00002'
-reference_id = 62
-
-v_id = 'test_video/id00061/shLz1teDejw/00094'
-reference_id = 62

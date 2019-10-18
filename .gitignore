@@ -1,5 +1,6 @@
 debug*
 checkpoints/
+demo/
 results/
 build/
 dist/
