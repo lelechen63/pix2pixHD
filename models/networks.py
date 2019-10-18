@@ -576,7 +576,7 @@ class LossCnt(nn.Module):
         self.VGGFace = cropped_VGGFace
         self.VGGFace.eval()
 
-    def forward(self, x, x_hat, vgg19_weight=1e-2, vggface_weight=2e-3):
+    def forward(self, x, x_hat,  vggface_weight=0.1):
         # print (x.shape)
         # print (x_hat.shape)
         # print ('===========')
