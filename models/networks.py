@@ -298,17 +298,21 @@ class GlobalGenerator(nn.Module):
                                     norm='in',
                                     activation=activ,
                                     pad_type=pad_type)]  # 64, 256, 256 
-        
-        
-        self.decoder = nn.Sequential(*model)
+        if not self.attention:
+            model += [Conv2dBlock(64, 3, 7, 1, 3,
+                                   norm='none',
+                                   activation='tanh',
+                                   pad_type=pad_type)]
+
+            self.decoder = nn.Sequential(*model)
+        else:
+            self.decoder = nn.Sequential(*model)
 
         self.alpha_conv = Conv2dBlock(64, 1, 7, 1, 3,
                                    norm='none',
                                    activation='sigmoid',
                                    pad_type=pad_type)
 
-
-        
         
 
         self.rgb_conv = Conv2dBlock(64, 3, 7, 1, 3,
@@ -318,7 +322,6 @@ class GlobalGenerator(nn.Module):
         
 
         
-
 
         self.embedder = Embedder()
 
@@ -363,10 +366,12 @@ class GlobalGenerator(nn.Module):
         # Decode
         adain_params = self.mlp(e_hat)
         assign_adain_params(adain_params, self.decoder)
-        I_feature = self.decoder(feature)
-        I_hat = self.rgb_conv(I_feature)
         if not self.attention:
-            return [I_hat]
+            return [self.decoder(feature)]
+        I_feature = self.decoder(feature)
+
+        I_hat = self.rgb_conv(I_feature)
+        
 
         
         

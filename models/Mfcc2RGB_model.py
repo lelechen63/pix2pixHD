@@ -99,24 +99,24 @@ class Mfcc2RGBModel1(BaseModel):
         
         # real images for training
         if real_image is not None:
-            real_image = Variable(real_image.data.cuda())
+            real_image = Variable(real_image.data.cuda(non_blocking=True))
         else:
             print ('=======================')
         if references is not None:
-            references = Variable(references.data.cuda())
+            references = Variable(references.data.cuda(non_blocking=True))
         else:
             print ('=======================')
         if target_lmark is not None:
-            target_lmark = Variable(target_lmark.data.cuda())
+            target_lmark = Variable(target_lmark.data.cuda(non_blocking=True))
         else:
             print ('=======================')
         if target_ani is not None:
-            target_ani = Variable(target_ani.data.cuda())
+            target_ani = Variable(target_ani.data.cuda(non_blocking=True))
         else:
             print ('=======================')
 
         if audio is not None:
-            audio = Variable(audio.data.cuda())
+            audio = Variable(audio.data.cuda(non_blocking=True))
 
         
         return references, target_lmark, target_ani, real_image, audio

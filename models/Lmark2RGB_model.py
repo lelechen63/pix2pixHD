@@ -102,11 +102,13 @@ class Lmark2RGBModel1(BaseModel):
             params = list(self.netD.parameters())    
             self.optimizer_D = torch.optim.Adam(params, lr=opt.lr, betas=(opt.beta1, 0.999))
 
-    def encode_input(self, references = None, target_lmark = None, target_ani = None, real_image = None, infer=False):             
+    def encode_input(self, references = None, target_lmark = None, target_ani = None, real_image = None,similar_frame= None, infer=False):             
         
         # real images for training
         if real_image is not None:
             real_image = Variable(real_image.data.cuda(non_blocking=True))
+        if similar_frame is not None:
+            similar_frame = Variable(similar_frame.data.cuda(non_blocking=True))
         if references is not None:
             references = Variable(references.data.cuda(non_blocking=True))
         if target_lmark is not None:
@@ -116,7 +118,7 @@ class Lmark2RGBModel1(BaseModel):
             g_in = torch.cat([target_lmark, target_ani], 1)
         else:
             g_in = target_lmark
-        return references, target_lmark, target_ani, real_image, g_in
+        return references, target_lmark, target_ani, real_image, g_in, similar_frame
 
     def discriminate(self,  g_in, test_image, use_pool=False):
         input_concat = torch.cat(( g_in, test_image.detach()), dim=1)
@@ -128,7 +130,7 @@ class Lmark2RGBModel1(BaseModel):
 
     def forward(self, references, target_lmark, target_ani, real_image, similar_frame, infer=False):
         # Encode Inputs
-        references, target_lmark, target_ani, real_image , g_in= self.encode_input(references = references, target_lmark = target_lmark, target_ani = target_ani, real_image = real_image,infer= infer)  
+        references, target_lmark, target_ani, real_image , g_in , similar_frame= self.encode_input(references = references, target_lmark = target_lmark, target_ani = target_ani, real_image = real_image,similar_frame = similar_frame,infer= infer)  
 
         # Fake Generation
         
@@ -172,12 +174,15 @@ class Lmark2RGBModel1(BaseModel):
         # Only return the fake_B image if necessary to save BW
         return [ self.loss_filter( loss_G_GAN, loss_G_GAN_Feat, loss_G_VGG, loss_D_real, loss_D_fake, loss_G_CNT, loss_G_PIX ), None if not infer else fake_list ]
 
-    def inference(self, references, target_lmark, target_ani, image):
+    def inference(self, references, target_lmark, target_ani, image, similar_frame):
         # Encode Inputs        
         image = Variable(image) if image is not None else None
-        references, target_lmark, target_ani, real_image , g_in = self.encode_input(references, target_lmark, target_ani, image , infer=True)
+
+        similar_frame = Variable(similar_frame) if image is not None else None
+        references, target_lmark, target_ani, real_image , g_in, similar_frame = self.encode_input(references, target_lmark, target_ani, image , similar_frame, infer=True)
 
         # Fake Generation           
+        print (similar_frame)
         if torch.__version__.startswith('0.4'):
             with torch.no_grad():
                 fake_list  = self.netG.forward(references, g_in, similar_frame)
@@ -213,5 +218,5 @@ class Lmark2RGBModel1(BaseModel):
 
 class InferenceModel1(Lmark2RGBModel1):
     def forward(self, inp):
-        references, target_lmark, target_ani, image = inp
-        return self.inference(references, target_lmark, target_ani, image)
+        references, target_lmark, target_ani, image, similar_frame = inp
+        return self.inference(references, target_lmark, target_ani, image, similar_frame)

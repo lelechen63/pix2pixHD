@@ -31,17 +31,24 @@ for i, data in enumerate(dataset):
     if i >= opt.how_many:
         break
     minibatch = 1 
-    if opt.no_ani:
-        generated = model.inference(Variable(data['reference_frames']), Variable(data['target_lmark']), None,  Variable(data['target_rgb']))
+    if opt.no_att:
+        similar_img = None
     else:
-        generated = model.inference(Variable(data['reference_frames']), Variable(data['target_lmark']),  Variable(data['target_ani']),  Variable(data['target_rgb']))
+        similar_img = Variable(data['similar_frame'])
+
+    
+    if opt.no_ani:
+        
+        generated = model.inference(Variable(data['reference_frames']), Variable(data['target_lmark']), None,  Variable(data['target_rgb']), similar_img)
+    else:
+        generated = model.inference(Variable(data['reference_frames']), Variable(data['target_lmark']),  Variable(data['target_ani']),  Variable(data['target_rgb']), similar_img)
     visuals = OrderedDict([('reference1', util.tensor2im(data['reference_frames'][0, 0,:3])),
                                     ('reference2', util.tensor2im(data['reference_frames'][0, 1,:3])),
                                     ('reference3', util.tensor2im(data['reference_frames'][0, 2,:3])),
                                     ('reference4', util.tensor2im(data['reference_frames'][0, 3,:3])),
                                    ('target_lmark', util.tensor2im(data['target_lmark'][0])),
                                    ('target_ani', util.tensor2im(data['target_ani'][0])),
-                                   ('synthesized_image', util.tensor2im(generated.data[0])),
+                                   ('synthesized_image', util.tensor2im(generated[0].data[0])),
                                    ('real_image', util.tensor2im(data['target_rgb'][0]))])
     img_path = data['v_id']
     print('process image... %s' % img_path)
