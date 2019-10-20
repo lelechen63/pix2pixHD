@@ -58,9 +58,9 @@ for epoch in range(start_epoch, opt.niter + opt.niter_decay + 1):
 
         ############## Forward Pass ######################
         if opt.no_ani:
-            losses, generated = model(references =Variable(data['reference_frames']),target_lmark= Variable(data['target_lmark']),target_ani=  None,real_image=  Variable(data['target_rgb']), infer=save_fake)
+            losses, generated = model(references =Variable(data['reference_frames']),target_lmark= Variable(data['target_lmark']),target_ani=  None,real_image=  Variable(data['target_rgb']), similar_frame = data['similar_frame'], infer=save_fake)
         else:
-            losses, generated = model(references =Variable(data['reference_frames']),target_lmark= Variable(data['target_lmark']),target_ani=   Variable(data['target_ani']),real_image=  Variable(data['target_rgb']), infer=save_fake)
+            losses, generated = model(references =Variable(data['reference_frames']),target_lmark= Variable(data['target_lmark']),target_ani=   Variable(data['target_ani']),real_image=  Variable(data['target_rgb']), similar_frame = data['similar_frame'], infer=save_fake)
 
         # sum per device losses
         losses = [ torch.mean(x) if not isinstance(x, int) else x for x in losses ]
@@ -97,16 +97,24 @@ for epoch in range(start_epoch, opt.niter + opt.niter_decay + 1):
             visualizer.plot_current_errors(errors, total_steps)
 
         ### display output images
-        if save_fake:
-            visuals = OrderedDict([('reference1', util.tensor2im(data['reference_frames'][0, 0,:3])),
+        if save_fake and len(generated)> 1:
+            info = [str(data['v_id']).split(',')[0], str(data['reference_ids']).split('}')[0], str(data['target_id'] ).split(',')[0]]
+            info = '-'.join(info).replace('/','-')
+
+            visuals = OrderedDict([(info + 'reference1', util.tensor2im(data['reference_frames'][0, 0,:3])),
                                     ('reference2', util.tensor2im(data['reference_frames'][0, 1,:3])),
                                     ('reference3', util.tensor2im(data['reference_frames'][0, 2,:3])),
                                     ('reference4', util.tensor2im(data['reference_frames'][0, 3,:3])),
                                    ('target_lmark', util.tensor2im(data['target_lmark'][0])),
                                    ('target_ani', util.tensor2im(data['target_ani'][0])),
-                                   ('synthesized_image', util.tensor2im(generated.data[0])),
+                                   ('synthesized_image', util.tensor2im(generated[0].data[0])),
+                                   ('masked_similar_img', util.tensor2im(generated[1].data[0])),
+                                   ('face_foreground', util.tensor2im(generated[2].data[0])),
+                                   ('beta', util.tensor2im(generated[3].data[0])),
+                                   ('alpha', util.tensor2im(generated[4].data[0])),
+                                   ('I_hat', util.tensor2im(generated[5].data[0])),
                                    ('real_image', util.tensor2im(data['target_rgb'][0]))])
-            visualizer.display_current_results(visuals, epoch, total_steps, data['v_id'], data['reference_ids'], data['target_id'] )
+            visualizer.display_current_results(visuals, epoch, total_steps)
 
         ### save latest model
         if total_steps % opt.save_latest_freq == save_delta:

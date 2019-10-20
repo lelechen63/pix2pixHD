@@ -36,7 +36,7 @@ class Visualizer():
             log_file.write('================ Training Loss (%s) ================\n' % now)
 
     # |visuals|: dictionary of images to display or save
-    def display_current_results(self, visuals, epoch, step, video_path, reference_ids, target_id):
+    def display_current_results(self, visuals, epoch, step):
         if self.tf_log: # show images in tensorboard output
             img_summaries = []
             for label, image_numpy in visuals.items():
@@ -71,9 +71,8 @@ class Visualizer():
                 ims = []
                 txts = []
                 links = []
-
+                webpage.add_header('epoch:{}'.format(n))
                 for label, image_numpy in visuals.items():
-                    webpage.add_header('epoch:{}, video_path:{}, ref_ids:{}, gt_id:{}'.format(n, str(video_path).split(',')[0], str(reference_ids).split('}')[0], str(target_id).split(',')[0]))
                     if isinstance(image_numpy, list):
                         for i in range(len(image_numpy)):
                             img_path = 'epoch%.3d_%s_%d.jpg' % (n, label, i)

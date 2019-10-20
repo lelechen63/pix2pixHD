@@ -29,7 +29,9 @@ class Lmark2RGBModel1(BaseModel):
             input_nc = 6#(lmark + ani), put is together
         ##### define networks        
         # Generator network
-        self.netG = networks.define_G(input_nc = input_nc, output_nc =opt.output_nc,netG = opt.netG, pad_type='reflect',norm = opt.norm, gpu_ids=self.gpu_ids)          
+
+        self.attention = not opt.no_att
+        self.netG = networks.define_G(input_nc = input_nc, output_nc =opt.output_nc,netG = opt.netG, pad_type='reflect',norm = opt.norm, ngf = opt.ngf, attention = self.attention, gpu_ids=self.gpu_ids)          
 
         # Discriminator network
         if self.isTrain:
@@ -124,14 +126,15 @@ class Lmark2RGBModel1(BaseModel):
         else:
             return self.netD.forward(input_concat)
 
-    def forward(self, references, target_lmark, target_ani, real_image, infer=False):
+    def forward(self, references, target_lmark, target_ani, real_image, similar_frame, infer=False):
         # Encode Inputs
         references, target_lmark, target_ani, real_image , g_in= self.encode_input(references = references, target_lmark = target_lmark, target_ani = target_ani, real_image = real_image,infer= infer)  
 
         # Fake Generation
         
-        fake_image = self.netG.forward(references, g_in)
-
+        fake_list = self.netG.forward(references, g_in , similar_frame)
+        # if self.attention:
+        fake_image = fake_list[0]
         # Fake Detection and Loss
         pred_fake_pool = self.discriminate( g_in, fake_image, use_pool=True)
         loss_D_fake = self.criterionGAN(pred_fake_pool, False)        
@@ -167,7 +170,7 @@ class Lmark2RGBModel1(BaseModel):
             loss_G_PIX = self.criterionPix(real_image, fake_image) 
         
         # Only return the fake_B image if necessary to save BW
-        return [ self.loss_filter( loss_G_GAN, loss_G_GAN_Feat, loss_G_VGG, loss_D_real, loss_D_fake, loss_G_CNT, loss_G_PIX ), None if not infer else fake_image ]
+        return [ self.loss_filter( loss_G_GAN, loss_G_GAN_Feat, loss_G_VGG, loss_D_real, loss_D_fake, loss_G_CNT, loss_G_PIX ), None if not infer else fake_list ]
 
     def inference(self, references, target_lmark, target_ani, image):
         # Encode Inputs        
@@ -177,10 +180,10 @@ class Lmark2RGBModel1(BaseModel):
         # Fake Generation           
         if torch.__version__.startswith('0.4'):
             with torch.no_grad():
-                fake_image = self.netG.forward(references, g_in)
+                fake_list  = self.netG.forward(references, g_in, similar_frame)
         else:
-            fake_image = self.netG.forward(references, g_in)
-        return fake_image
+            fake_list = self.netG.forward(references, g_in, similar_frame)
+        return fake_list
 
 
     def save(self, which_epoch):

@@ -48,7 +48,8 @@ class BaseOptions():
         self.parser.add_argument('--n_local_enhancers', type=int, default=1, help='number of local enhancers to use')        
         self.parser.add_argument('--niter_fix_global', type=int, default=0, help='number of epochs that we only train the outmost local enhancer')
         self.parser.add_argument('--no_ani', action='store_true', help='if specified, use tensorboard logging. Requires tensorflow installed')        
-  
+        self.parser.add_argument('--no_att', action='store_true', help='if specified, use tensorboard logging. Requires tensorflow installed')        
+
 
         self.initialized = True
 

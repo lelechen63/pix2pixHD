@@ -92,6 +92,8 @@ class LinearBlock(nn.Module):
             self.activation = nn.ReLU(inplace=True)
         elif activation == 'lrelu':
             self.activation = nn.LeakyReLU(0.2, inplace=True)
+        elif activation == 'sigmoid':
+            self.activation = nn.Sigmoid()
         elif activation == 'tanh':
             self.activation = nn.Tanh()
         elif activation == 'none':
@@ -143,6 +145,8 @@ class Conv2dBlock(nn.Module):
             self.activation = nn.ReLU(inplace=True)
         elif activation == 'lrelu':
             self.activation = nn.LeakyReLU(0.2, inplace=True)
+        elif activation == 'sigmoid':
+            self.activation = nn.Sigmoid()
         elif activation == 'tanh':
             self.activation = nn.Tanh()
         elif activation == 'none':
