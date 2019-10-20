@@ -25,7 +25,10 @@ from imageio import imread
 from scipy import linalg
 import pathlib
 import urllib
+import cv2
 import warnings
+from skimage.measure import compare_ssim as ssim_f
+import math
 
 class InvalidFIDException(Exception):
     pass
@@ -62,6 +65,14 @@ def _get_inception_layer(sess):
               o.__dict__['_shape_val'] = tf.TensorShape(new_shape)
     return pool3
 #-------------------------------------------------------------------------------
+
+
+def psnr_f(img1, img2):
+    mse = np.mean( (img1 - img2) ** 2 )
+    if mse == 0:
+        return 100
+    PIXEL_MAX = 255.0
+    return 20 * math.log10(PIXEL_MAX / math.sqrt(mse))
 
 
 def get_activations(images, sess, batch_size=50, verbose=False):
@@ -311,6 +322,48 @@ def _handle_path_real(path, sess, low_profile=False):
             del x #clean up memory
     return m, s
 
+
+
+def compare_ssim(path):
+    path = pathlib.Path(path)
+    files = list(path.glob('*real_image.jpg')) + list(path.glob('*real_image.png'))
+    files.sort()
+    dis_txt = open( os.path.join( os.path.dirname(path),  'ssim.txt')  ,'w')
+    ssims = []
+    # msssims = []
+    psnrs =[]
+    for i,d in enumerate(files):
+        # try:
+        real_path = str(d)
+        fake_path  = real_path.replace("_real_","_synthesized_")
+        
+        f_i = cv2.imread(fake_path)
+        r_i = cv2.imread(real_path)
+
+        f_i = cv2.cvtColor(f_i, cv2.COLOR_BGR2RGB)
+        r_i = cv2.cvtColor(r_i, cv2.COLOR_BGR2RGB)
+
+        
+        r_i = cv2.resize(r_i, (256,256), interpolation = cv2.INTER_AREA)
+        f_i = cv2.resize(f_i, (256,256), interpolation = cv2.INTER_AREA)
+        ssim = ssim_f(f_i,r_i,multichannel=True)
+        f_i = cv2.cvtColor(f_i, cv2.COLOR_RGB2GRAY)
+        r_i = cv2.cvtColor(r_i, cv2.COLOR_RGB2GRAY)
+        psnr = psnr_f(f_i,r_i)
+
+
+        psnrs.append(psnr)
+        ssims.append(ssim)
+        dis_txt.write(fake_path + "\t ssim: {:.4f},\t psnr: {:.4f}".format( ssim, psnr) + '\n') 
+        # except:
+        #     print ('gggg')
+        #     continue
+    average_ssim = sum(ssims) / len(ssims)
+    average_psnr = sum(psnrs) / len(psnrs)
+    # average_msssim = sum(msssims) / len(msssims)
+    print ("Aeverage: ssim: {:.4f}, psnr: {:.4f}".format( average_ssim, average_psnr))
+    return  average_ssim, average_psnr
+
 def calculate_fid_given_paths(paths, inception_path, low_profile=False):
     ''' Calculates the FID of two paths. '''
     inception_path = check_or_download_inception(inception_path)
@@ -342,3 +395,6 @@ if __name__ == "__main__":
     os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu
     fid_value = calculate_fid_given_paths(args.path, args.inception, low_profile=args.lowprofile)
     print("FID: ", fid_value)
+    average_ssim, average_psnr = compare_ssim(args.path)
+    print ("Aeverage:  ssim: {:.4f}, psnr: {:.4f}".format( average_ssim, average_psnr))
+    
