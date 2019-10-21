@@ -31,6 +31,8 @@ class Lmark2RGBModel1(BaseModel):
         # Generator network
 
         self.attention = not opt.no_att
+
+        # self.lstm = not opt.no_lstm
         self.netG = networks.define_G(input_nc = input_nc, output_nc =opt.output_nc,netG = opt.netG, pad_type='reflect',norm = opt.norm, ngf = opt.ngf, attention = self.attention, gpu_ids=self.gpu_ids)          
 
         # Discriminator network
