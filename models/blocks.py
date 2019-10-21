@@ -116,7 +116,6 @@ class Conv2dBlock(nn.Module):
                  use_bias=True, activation_first=False):
         super(Conv2dBlock, self).__init__()
         self.use_bias = use_bias
-        self.activation_first = activation_first
         # initialize padding
         if pad_type == 'reflect':
             self.pad = nn.ReflectionPad2d(padding)
@@ -157,18 +156,12 @@ class Conv2dBlock(nn.Module):
         self.conv = nn.Conv2d(in_dim, out_dim, ks, st, bias=self.use_bias)
 
     def forward(self, x):
-        if self.activation_first:
-            if self.activation:
-                x = self.activation(x)
-            x = self.conv(self.pad(x))
-            if self.norm:
-                x = self.norm(x)
-        else:
-            x = self.conv(self.pad(x))
-            if self.norm:
-                x = self.norm(x)
-            if self.activation:
-                x = self.activation(x)
+       
+        x = self.conv(self.pad(x))
+        if self.norm:
+            x = self.norm(x)
+        if self.activation:
+            x = self.activation(x)
         return x
 
 
