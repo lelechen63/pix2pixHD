@@ -381,7 +381,7 @@ class GlobalGenerator(nn.Module):
 
         face_foreground = (1 - alpha) * ani_img + alpha * I_hat
 
-        foreground_feature = self.foregroundNet( torch.cat([ani_img, similar_img]) )  
+        foreground_feature = self.foregroundNet( torch.cat([ani_img, similar_img], 1) )  
 
         # foreground_feature = self.foregroundNet( ani_img)  # should be torch.cat([ani_img, similar_img]) and change foreground to 6 channel input
 
