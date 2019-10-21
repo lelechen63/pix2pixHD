@@ -333,7 +333,7 @@ class GlobalGenerator(nn.Module):
                        norm='none',
                        activ='relu')
         
-        model = [nn.ReflectionPad2d(3), nn.Conv2d(3, 32, kernel_size=7, padding=0), norm_layer(32), nn.ReLU(True) ]
+        model = [nn.ReflectionPad2d(3), nn.Conv2d(6, 32, kernel_size=7, padding=0), norm_layer(32), nn.ReLU(True) ]
         ### downsample
         model += [Conv2dBlock(32, 64, 4, 2, 1,           # 128, 128, 128 
                                        norm= 'in',
@@ -381,7 +381,9 @@ class GlobalGenerator(nn.Module):
 
         face_foreground = (1 - alpha) * ani_img + alpha * I_hat
 
-        foreground_feature = self.foregroundNet(ani_img)
+        foreground_feature = self.foregroundNet( torch.cat([ani_img, similar_img]) )  
+
+        # foreground_feature = self.foregroundNet( ani_img)  # should be torch.cat([ani_img, similar_img]) and change foreground to 6 channel input
 
         forMask_feature = torch.cat([foreground_feature, I_feature ], 1)
 
