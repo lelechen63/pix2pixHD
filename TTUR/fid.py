@@ -383,7 +383,7 @@ def calculate_fid_given_paths(paths, inception_path, low_profile=False):
 if __name__ == "__main__":
     from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter
     parser = ArgumentParser(formatter_class=ArgumentDefaultsHelpFormatter)
-    parser.add_argument("path", type=str,
+    parser.add_argument("--path", type=str,
         help='Path to the generated images or to .npz statistic files')
     parser.add_argument("-i", "--inception", type=str, default=None,
         help='Path to Inception model (will be downloaded if not provided)')
