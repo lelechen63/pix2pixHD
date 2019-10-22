@@ -32,10 +32,13 @@ def get_norm_layer(norm_type='instance'):
         raise NotImplementedError('normalization layer [%s] is not found' % norm_type)
     return norm_layer
 
-def define_G(input_nc, output_nc, netG, pad_type,  norm='instance',ngf= 64, attention = True, gpu_ids=[]):    
+def define_G(input_nc, output_nc, netG, pad_type,  norm='instance',ngf= 64, attention = True, lstm = False, gpu_ids=[]):    
     norm_layer = get_norm_layer(norm_type=norm)     
-    if netG == 'global':    
-        netG = GlobalGenerator( input_nc, output_nc, pad_type, norm_layer,ngf,attention)       
+    if netG == 'global':
+        if lstm == False:    
+            netG = GlobalGenerator( input_nc, output_nc, pad_type, norm_layer,ngf,attention)       
+        else:
+            netG = GlobalGenerator_lstm( input_nc, output_nc, pad_type, norm_layer,ngf,attention)
     elif netG == 'local':        
         netG = LocalEnhancer(input_nc, output_nc, ngf, n_downsample_global, n_blocks_global, 
                                   n_local_enhancers, n_blocks_local, norm_layer)

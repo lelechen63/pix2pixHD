@@ -42,7 +42,7 @@ class Lmark2rgbDataset(Dataset):
         self.root  = opt.dataroot
 
         if opt.isTrain:
-            _file = open(os.path.join(self.root, 'txt',  "train_front_rt2.pkl"), "rb")
+            _file = open(os.path.join(self.root, 'txt',  "front_rt2.pkl"), "rb")
             # self.data = pkl.load(_file)
             self.data = pkl._Unpickler(_file)
             self.data.encoding = 'latin1'
@@ -140,16 +140,7 @@ class Lmark2rgbDataset(Dataset):
             target_ani = cv2.resize(target_ani, self.output_shape)
             target_ani = self.transform(target_ani)
 
-            # reference_rgb = mmcv.bgr2rgb(reference_rgb)
-            # reference_rgb = cv2.resize(reference_rgb, self.output_shape)
-            # reference_rgb = self.transform(reference_rgb)
-
-            # reference_ani = mmcv.bgr2rgb(reference_ani)
-            # reference_ani = cv2.resize(reference_ani, self.output_shape)
-            # reference_ani = self.transform(reference_ani)
-
             target_lmark = plot_landmarks(target_lmark)
-            # target_lmark = np.array(target_lmark) 
             target_lmark  = cv2.resize(target_lmark, self.output_shape)
             target_lmark = self.transform(target_lmark)
 
@@ -181,7 +172,7 @@ class Lmark2rgbLSTMDataset(Dataset):
         """
         
         self.output_shape   = tuple([opt.loadSize, opt.loadSize])
-        self.num_frames = 4  
+        self.num_frames = opt.num_frames
         self.opt = opt
         self.root  = opt.dataroot
         self.lstm_length = opt.lstm_length
