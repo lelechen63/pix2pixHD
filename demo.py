@@ -164,4 +164,3 @@ for i, data in enumerate(dataset):
     torchvision.utils.save_image(img, 
 			    "{}/{:05d}.png".format(save_path,i),normalize=True)
 
-    

@@ -4,8 +4,12 @@ from data.base_data_loader import BaseDataLoader
 
 def CreateDataset(opt):
     dataset = None
-    from data.dataset import Lmark2rgbDataset
-    dataset = Lmark2rgbDataset(opt)
+    if opt.use_lstm:
+        from data.dataset import Lmark2rgbLSTMDataset
+        dataset = Lmark2rgbLSTMDataset(opt)
+    else:
+        from data.dataset import Lmark2rgbDataset
+        dataset = Lmark2rgbDataset(opt)
 
     print("dataset [%s] was created" % (dataset.name()))
     # dataset.__init__(opt)
