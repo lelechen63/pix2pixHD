@@ -71,6 +71,8 @@ def demo_data(root, v_id, reference_id):
         reference_rt_diff = np.absolute(reference_rt_diff)
         r_diff = np.mean(reference_rt_diff, axis =1)
         similar_id  = np.argmin(r_diff) 
+        print (similar_id)
+        print (reference_frames.shape)
         similar_frames[target_id] = reference_frames[similar_id]
 
         target_rgb = real_video[target_id]
@@ -96,6 +98,7 @@ def demo_data(root, v_id, reference_id):
         target_lmark = torch.unsqueeze( target_lmark, 0)  
         target_rgb= torch.unsqueeze(target_rgb , 0) 
         target_ani= torch.unsqueeze(target_ani , 0) 
+        similar_frames = torch.unsqueeze(similar_frames , 0) 
 
 
 
