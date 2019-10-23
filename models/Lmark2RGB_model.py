@@ -177,12 +177,12 @@ class Lmark2RGBModel1(BaseModel):
         # Only return the fake_B image if necessary to save BW
         return [ self.loss_filter( loss_G_GAN, loss_G_GAN_Feat, loss_G_VGG, loss_D_real, loss_D_fake, loss_G_CNT, loss_G_PIX ), None if not infer else fake_list ]
 
-    def inference(self, references, target_lmark, target_ani, image, similar_frame):
+    def inference(self, references, target_lmark, target_ani, real_image, similar_frame):
         # Encode Inputs        
-        image = Variable(image) if image is not None else None
+        real_image = Variable(real_image) if real_image is not None else None
 
-        similar_frame = Variable(similar_frame) if image is not None else None
-        references, target_lmark, target_ani, real_image , g_in, similar_frame = self.encode_input(references, target_lmark, target_ani, image , similar_frame, infer=True)
+        similar_frame = Variable(similar_frame) if real_image is not None else None
+        references, target_lmark, target_ani, real_image , g_in, similar_frame = self.encode_input(references, target_lmark, target_ani, real_image , similar_frame, infer=True)
 
         # Fake Generation           
         if torch.__version__.startswith('0.4'):
