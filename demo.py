@@ -136,8 +136,8 @@ root = '/data2/lchen63/voxceleb'
 # reference_id = 36}
 if not os.path.exists('./demo' ):
         os.mkdir('./demo')
-    if not os.path.exists( os.path.join('./demo', opt.name)  ):
-        os.mkdir(os.path.join('./demo', opt.name))
+if not os.path.exists( os.path.join('./demo', opt.name)  ):
+    os.mkdir(os.path.join('./demo', opt.name))
 _file = open(os.path.join(root, 'txt', "front_rt2.pkl"), "rb")
 data = pkl._Unpickler(_file)
 data.encoding = 'latin1'
