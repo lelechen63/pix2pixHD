@@ -155,7 +155,7 @@ for i, data in enumerate(dataset):
     #     break
     minibatch = 1 
     if opt.no_ani:
-        generated = model.inference(Variable(data['reference_frames']), Variable(data['target_lmark']), None,  Variable(data['target_rgb']))
+        generated = model.inference(Variable(references =Variable(data['reference_frames']),target_lmark= Variable(data['target_lmark']),target_ani=  None, real_image=  Variable(data['target_rgb']), similar_frame = Variable(data['similar_frame']))
     else:
         generated = model.inference(Variable(references =Variable(data['reference_frames']),target_lmark= Variable(data['target_lmark']),target_ani=   Variable(data['target_ani']),real_image=  Variable(data['target_rgb']), similar_frame = Variable(data['similar_frame']))
     
@@ -168,4 +168,4 @@ nput_dic = {'v_id' : v_id, 'target_lmark': target_lmark, 'reference_frames': ref
             'target_rgb': target_rgb, 'target_ani': target_ani, 'reference_ids':str(input_indexs), 'target_id': target_id
             , 'similar_frame': similar_frame}
 
-losses, generated = model(references =Variable(data['reference_frames']),target_lmark= Variable(data['target_lmark']),target_ani=   Variable(data['target_ani']),real_image=  Variable(data['target_rgb']), similar_frame = Variable(data['similar_frame']), infer=save_fake)
+# losses, generated = model(references =Variable(data['reference_frames']),target_lmark= Variable(data['target_lmark']),target_ani=   Variable(data['target_ani']),real_image=  Variable(data['target_rgb']), similar_frame = Variable(data['similar_frame']), infer=save_fake)
