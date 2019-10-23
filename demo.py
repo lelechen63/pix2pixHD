@@ -112,8 +112,8 @@ def demo_data(root, v_id, reference_id):
         input_dics.append(input_dic)
     return input_dics
 
-root = '/home/cxu-serve/p1/lchen63/voxceleb'
-
+# root = '/home/cxu-serve/p1/lchen63/voxceleb'
+root = '/data2/lchen63/voxceleb'
 
 # v_id = 'test_video/id00061/cAT9aR8oFx0/00141'
 # reference_id = 542
@@ -127,26 +127,31 @@ root = '/home/cxu-serve/p1/lchen63/voxceleb'
 
 # v_id = 'test_video/id02286/4T-CluJt8WI/00003'
 # reference_id = 189
-v_id = 'dev_video/id01387/qzB04Chz-xQ/00431'
-reference_id  = 126
+# v_id = 'dev_video/id01387/qzB04Chz-xQ/00431'
+# reference_id  = 126
 
 # v_id = 'dev_video/id01241/cj3tXu2kvG4/00073'
 # reference_id  = 63
 # v_id = 'dev_video/id01241/shLz1teDejw/00094'
 # reference_id = 36}
-
-dataset = demo_data(root, v_id, reference_id)
-
-
 if not os.path.exists('./demo' ):
-    os.mkdir('./demo')
-if not os.path.exists( os.path.join('./demo', opt.name)  ):
-    os.mkdir(os.path.join('./demo', opt.name))
+        os.mkdir('./demo')
+    if not os.path.exists( os.path.join('./demo', opt.name)  ):
+        os.mkdir(os.path.join('./demo', opt.name))
+_file = open(os.path.join(root, 'txt', "front_rt2.pkl"), "rb")
+data = pkl._Unpickler(_file)
+data.encoding = 'latin1'
+data = data.load()
+random.shuffle(data)
 
-if not os.path.exists( os.path.join('./demo', opt.name, v_id.split('/')[-2] + '_' + v_id.split('/')[-1])  ):
-    os.mkdir(os.path.join('./demo', opt.name, v_id.split('/')[-2]+ '_' +  v_id.split('/')[-1]))
-save_path = os.path.join('./demo', opt.name,v_id.split('/')[-2]+ '_' +  v_id.split('/')[-1])
-# test
+for item in data[:2]:
+    v_id = item[0]
+    reference_id = item[1]
+    dataset = demo_data(root, v_id, reference_id)
+    if not os.path.exists( os.path.join('./demo', opt.name, v_id.split('/')[-2] + '_' + v_id.split('/')[-1])  ):
+        os.mkdir(os.path.join('./demo', opt.name, v_id.split('/')[-2]+ '_' +  v_id.split('/')[-1]))
+    save_path = os.path.join('./demo', opt.name,v_id.split('/')[-2]+ '_' +  v_id.split('/')[-1])
+    # test
 model = create_model(opt)
 if opt.verbose:
     print(model)
