@@ -358,6 +358,7 @@ class GlobalGenerator(nn.Module):
 
     def forward(self, references, g_in, similar_img):
         dims = references.shape
+        print (dim)
 
         references = references.reshape( dims[0] * dims[1], dims[2], dims[3], dims[4]  )
         e_vectors = self.embedder(references).reshape(dims[0] , dims[1], -1)
