@@ -46,7 +46,7 @@ def demo_data(root, v_id, reference_id):
     target_ids = []
     for gg in range(v_length):
         target_ids.append(gg)
-    reference_frames = torch.zeros(self.num_frames, 6 ,self.output_shape[0],self.output_shape[1])
+    reference_frames = torch.zeros(num_frames, 6 ,output_shape[0],output_shape[1])
     for kk, t in enumerate(input_indexs):
         rgb_t =  mmcv.bgr2rgb(real_video[t]) 
         lmark_t = lmark[t]
