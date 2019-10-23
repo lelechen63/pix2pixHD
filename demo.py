@@ -74,7 +74,7 @@ def demo_data(root, v_id, reference_id):
         similar_id  = np.argmin(r_diff) 
         print (similar_id)
         print (reference_frames.shape)
-        similar_frames = reference_frames[similar_id]
+        similar_frames = reference_frames[0,similar_id]
 
         target_rgb = real_video[target_id]
         reference_rgb = real_video[reference_id]
