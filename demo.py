@@ -64,7 +64,7 @@ def demo_data(root, v_id, reference_id):
         reference_rts[kk] = rt[t]
 
     input_dics = []
-    similar_frames = torch.zeros(v_length, 6, output_shape[0], output_shape[0])
+    similar_frames = torch.zeros( 6, output_shape[0], output_shape[0])    
     ############################################################################
     for target_id in target_ids:
         reference_rt_diff = reference_rts - rt[target_id]
@@ -73,7 +73,7 @@ def demo_data(root, v_id, reference_id):
         similar_id  = np.argmin(r_diff) 
         print (similar_id)
         print (reference_frames.shape)
-        similar_frames[target_id] = reference_frames[similar_id]
+        similar_frames = reference_frames[similar_id]
 
         target_rgb = real_video[target_id]
         reference_rgb = real_video[reference_id]
@@ -139,7 +139,9 @@ data = pkl._Unpickler(_file)
 data.encoding = 'latin1'
 data = data.load()
 random.shuffle(data)
-
+model = create_model(opt)
+if opt.verbose:
+    print(model)
 for item in data[:2]:
     v_id = item[0]
     reference_id = item[1]
@@ -148,26 +150,21 @@ for item in data[:2]:
         os.mkdir(os.path.join('./demo', opt.name, v_id.split('/')[-2]+ '_' +  v_id.split('/')[-1]))
     save_path = os.path.join('./demo', opt.name,v_id.split('/')[-2]+ '_' +  v_id.split('/')[-1])
     # test
-model = create_model(opt)
-if opt.verbose:
-    print(model)
-
-for i, data in enumerate(dataset):
-    # if i >= opt.how_many:
-    #     break
-    minibatch = 1 
-    if opt.no_ani:
-        generated = model.inference(references =Variable(data['reference_frames']),target_lmark= Variable(data['target_lmark']),target_ani=  None, real_image=  Variable(data['target_rgb']), similar_frame = Variable(data['similar_frame']))
-    else:
-        generated = model.inference(references =Variable(data['reference_frames']),target_lmark= Variable(data['target_lmark']),target_ani= Variable(data['target_ani']),real_image=  Variable(data['target_rgb']), similar_frame = Variable(data['similar_frame']))
-    
-    img = torch.cat([generated.data.cpu(), data['target_rgb']], 0)
-    torchvision.utils.save_image(img, 
-			    "{}/{:05d}.png".format(save_path,i),normalize=True)
 
 
-nput_dic = {'v_id' : v_id, 'target_lmark': target_lmark, 'reference_frames': reference_frames,
-            'target_rgb': target_rgb, 'target_ani': target_ani, 'reference_ids':str(input_indexs), 'target_id': target_id
-            , 'similar_frame': similar_frame}
+    for i, data in enumerate(dataset):
+        # if i >= opt.how_many:
+        #     break
+        minibatch = 1 
+        if opt.no_ani:
+            generated = model.inference(references =Variable(data['reference_frames']),target_lmark= Variable(data['target_lmark']),target_ani=  None, real_image=  Variable(data['target_rgb']), similar_frame = Variable(data['similar_frame']))
+        else:
+            generated = model.inference(references =Variable(data['reference_frames']),target_lmark= Variable(data['target_lmark']),target_ani= Variable(data['target_ani']),real_image=  Variable(data['target_rgb']), similar_frame = Variable(data['similar_frame']))
+        
+        img = torch.cat([generated.data.cpu(), data['target_rgb']], 0)
+        torchvision.utils.save_image(img, 
+                    "{}/{:05d}.png".format(save_path,i),normalize=True)
+
+
 
 # losses, generated = model(references =Variable(data['reference_frames']),target_lmark= Variable(data['target_lmark']),target_ani=   Variable(data['target_ani']),real_image=  Variable(data['target_rgb']), similar_frame = Variable(data['similar_frame']), infer=save_fake)
