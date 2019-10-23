@@ -31,7 +31,7 @@ def demo_data(root, v_id, reference_id):
     num_frames = opt.num_frames
     video_path = os.path.join(root, 'unzip', v_id + '.mp4')
     ani_video_path = os.path.join(root, 'unzip', v_id + '_ani.mp4')
-    rt_path = os.path.join(self.root, 'unzip', v_id + '_sRT.npy')
+    rt_path = os.path.join(root, 'unzip', v_id + '_sRT.npy')
     lmark_path = os.path.join(root, 'unzip', v_id + '.npy')
     rt = np.load(rt_path)[:,:3]
     lmark = np.load(lmark_path)[:,:,:-1]
@@ -40,7 +40,7 @@ def demo_data(root, v_id, reference_id):
     ani_video = mmcv.VideoReader(ani_video_path)
     # sample frames for embedding network
     input_indexs  = set(random.sample(range(0,64), num_frames))
-    reference_rts = np.zeros((self.num_frames, 3))
+    reference_rts = np.zeros((num_frames, 3))
     # we randomly choose a target frame 
     # while True:
     target_ids = []
@@ -66,7 +66,7 @@ def demo_data(root, v_id, reference_id):
     reference_frames = torch.stack(reference_frames)
     input_dics = []
     reference_frames= torch.unsqueeze(reference_frames , 0) 
-    similar_frames = torch.zeros(v_length, 6, self.output_shape[0], self.output_shape[0])
+    similar_frames = torch.zeros(v_length, 6, output_shape[0], output_shape[0])
     ############################################################################
     for target_id in target_ids:
         reference_rt_diff = reference_rts - rt[target_id]
