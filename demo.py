@@ -65,6 +65,7 @@ def demo_data(root, v_id, reference_id):
 
     input_dics = []
     similar_frames = torch.zeros( 6, output_shape[0], output_shape[0])    
+    reference_frames = torch.unsqueeze( reference_frames, 0)  
     ############################################################################
     for target_id in target_ids:
         reference_rt_diff = reference_rts - rt[target_id]
@@ -94,7 +95,7 @@ def demo_data(root, v_id, reference_id):
         target_lmark  = cv2.resize(target_lmark, output_shape)
         target_lmark = transform(target_lmark)
         
-        reference_frames = torch.unsqueeze( reference_frames, 0)  
+        
         target_lmark = torch.unsqueeze( target_lmark, 0)  
         target_rgb= torch.unsqueeze(target_rgb , 0) 
         target_ani= torch.unsqueeze(target_ani , 0) 
