@@ -141,7 +141,7 @@ random.shuffle(ggdata)
 model = create_model(opt)
 if opt.verbose:
     print(model)
-for item in ggdata[:2]:
+for item in ggdata[:10]:
     v_id = item[0]
     reference_id = item[1]
     dataset = demo_data(root, v_id, reference_id)
