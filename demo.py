@@ -92,10 +92,11 @@ def demo_data(root, v_id, reference_id):
         target_lmark  = cv2.resize(target_lmark, output_shape)
         target_lmark = transform(target_lmark)
         
-
+        reference_frames = torch.unsqueeze( reference_frames, 0)  
         target_lmark = torch.unsqueeze( target_lmark, 0)  
         target_rgb= torch.unsqueeze(target_rgb , 0) 
         target_ani= torch.unsqueeze(target_ani , 0) 
+
 
 
         input_dic = {'v_id' : v_id, 'target_lmark': target_lmark, 'reference_frames': reference_frames,
