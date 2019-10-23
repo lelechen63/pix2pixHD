@@ -185,7 +185,6 @@ class Lmark2RGBModel1(BaseModel):
         references, target_lmark, target_ani, real_image , g_in, similar_frame = self.encode_input(references, target_lmark, target_ani, image , similar_frame, infer=True)
 
         # Fake Generation           
-        print (similar_frame)
         if torch.__version__.startswith('0.4'):
             with torch.no_grad():
                 fake_list  = self.netG.forward(references, g_in, similar_frame)

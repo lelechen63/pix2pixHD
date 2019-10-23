@@ -152,7 +152,7 @@ class Lmark2rgbDataset(Dataset):
             , 'similar_frame': similar_frame}
             return input_dic
         except:
-            self.__getitem__(self, (index + 1) % len(self.data)  )
+            self.__getitem__( (index + 1) % len(self.data)  )
 
 
 
