@@ -72,8 +72,6 @@ def demo_data(root, v_id, reference_id):
         reference_rt_diff = np.absolute(reference_rt_diff)
         r_diff = np.mean(reference_rt_diff, axis =1)
         similar_id  = np.argmin(r_diff) 
-        print (similar_id)
-        print (reference_frames.shape)
         similar_frames = reference_frames[0,similar_id]
 
         target_rgb = real_video[target_id]
@@ -136,14 +134,14 @@ if not os.path.exists('./demo' ):
 if not os.path.exists( os.path.join('./demo', opt.name)  ):
     os.mkdir(os.path.join('./demo', opt.name))
 _file = open(os.path.join(root, 'txt', "front_rt2.pkl"), "rb")
-data = pkl._Unpickler(_file)
-data.encoding = 'latin1'
-data = data.load()
-random.shuffle(data)
+ggdata = pkl._Unpickler(_file)
+ggdata.encoding = 'latin1'
+ggdata = ggdata.load()
+random.shuffle(ggdata)
 model = create_model(opt)
 if opt.verbose:
     print(model)
-for item in data[:2]:
+for item in ggdata[:2]:
     v_id = item[0]
     reference_id = item[1]
     dataset = demo_data(root, v_id, reference_id)
