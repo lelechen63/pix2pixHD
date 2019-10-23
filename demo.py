@@ -47,7 +47,7 @@ def demo_data(root, v_id, reference_id):
     for gg in range(v_length):
         target_ids.append(gg)
     reference_frames = []
-    for t in input_indexs:
+    for kk, t in enumerate(input_indexs):
         rgb_t =  mmcv.bgr2rgb(real_video[t]) 
         lmark_t = lmark[t]
         lmark_rgb = plot_landmarks( lmark_t)
@@ -73,7 +73,7 @@ def demo_data(root, v_id, reference_id):
         reference_rt_diff = np.absolute(reference_rt_diff)
         r_diff = np.mean(reference_rt_diff, axis =1)
         similar_id  = np.argmin(r_diff) 
-        similar_frames[kk] = reference_frames[similar_id]
+        similar_frames[target_id] = reference_frames[similar_id]
 
         target_rgb = real_video[target_id]
         reference_rgb = real_video[reference_id]
