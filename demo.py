@@ -28,26 +28,19 @@ def demo_data(root, v_id, reference_id):
     transform = transforms.Compose([
         transforms.ToTensor(),
         transforms.Normalize(mean=(0.5, 0.5, 0.5), std=(0.5, 0.5, 0.5), inplace=True)])
-    num_frames = 4
-
+    num_frames = opt.num_frames
     video_path = os.path.join(root, 'unzip', v_id + '.mp4')
-    
     ani_video_path = os.path.join(root, 'unzip', v_id + '_ani.mp4')
-
-
+    rt_path = os.path.join(self.root, 'unzip', v_id + '_sRT.npy')
     lmark_path = os.path.join(root, 'unzip', v_id + '.npy')
-
-
+    rt = np.load(rt_path)[:,:3]
     lmark = np.load(lmark_path)[:,:,:-1]
-
     v_length = lmark.shape[0]
-
     real_video  = mmcv.VideoReader(video_path)
     ani_video = mmcv.VideoReader(ani_video_path)
-
     # sample frames for embedding network
     input_indexs  = set(random.sample(range(0,64), num_frames))
-
+    reference_rts = np.zeros((self.num_frames, 3))
     # we randomly choose a target frame 
     # while True:
     target_ids = []
@@ -68,11 +61,20 @@ def demo_data(root, v_id, reference_id):
         lmark_rgb = transform(lmark_rgb)
         reference_frames.append(torch.cat([rgb_t, lmark_rgb],0))  # (6, 256, 256)   
 
+        reference_rts[kk] = rt[t]
+
     reference_frames = torch.stack(reference_frames)
     input_dics = []
     reference_frames= torch.unsqueeze(reference_frames , 0) 
+    similar_frames = torch.zeros(v_length, 6, self.output_shape[0], self.output_shape[0])
     ############################################################################
     for target_id in target_ids:
+        reference_rt_diff = reference_rts - rt[target_id]
+        reference_rt_diff = np.absolute(reference_rt_diff)
+        r_diff = np.mean(reference_rt_diff, axis =1)
+        similar_id  = np.argmin(r_diff) 
+        similar_frames[kk] = reference_frames[similar_id]
+
         target_rgb = real_video[target_id]
         reference_rgb = real_video[reference_id]
         reference_ani = ani_video[reference_id]
@@ -87,14 +89,6 @@ def demo_data(root, v_id, reference_id):
         target_ani = cv2.resize(target_ani, output_shape)
         target_ani = transform(target_ani)
 
-        # reference_rgb = mmcv.bgr2rgb(reference_rgb)
-        # reference_rgb = cv2.resize(reference_rgb, output_shape)
-        # reference_rgb = transform(reference_rgb)
-
-        # reference_ani = mmcv.bgr2rgb(reference_ani)
-        # reference_ani = cv2.resize(reference_ani, output_shape)
-        # reference_ani = transform(reference_ani)
-
         target_lmark = plot_landmarks(target_lmark)
         # target_lmark = np.array(target_lmark) 
         target_lmark  = cv2.resize(target_lmark, output_shape)
@@ -108,7 +102,7 @@ def demo_data(root, v_id, reference_id):
 
         input_dic = {'v_id' : v_id, 'target_lmark': target_lmark, 'reference_frames': reference_frames,
         'target_rgb': target_rgb, 'target_ani': target_ani, 'reference_ids':str(input_indexs), 'target_id': target_id
-        }
+        ,'similar_frame': similar_frames}
         input_dics.append(input_dic)
     return input_dics
 
@@ -163,9 +157,15 @@ for i, data in enumerate(dataset):
     if opt.no_ani:
         generated = model.inference(Variable(data['reference_frames']), Variable(data['target_lmark']), None,  Variable(data['target_rgb']))
     else:
-        generated = model.inference(Variable(data['reference_frames']), Variable(data['target_lmark']),  Variable(data['target_ani']),  Variable(data['target_rgb']))
+        generated = model.inference(Variable(references =Variable(data['reference_frames']),target_lmark= Variable(data['target_lmark']),target_ani=   Variable(data['target_ani']),real_image=  Variable(data['target_rgb']), similar_frame = Variable(data['similar_frame']))
     
     img = torch.cat([generated.data.cpu(), data['target_rgb']], 0)
     torchvision.utils.save_image(img, 
 			    "{}/{:05d}.png".format(save_path,i),normalize=True)
 
+
+nput_dic = {'v_id' : v_id, 'target_lmark': target_lmark, 'reference_frames': reference_frames,
+            'target_rgb': target_rgb, 'target_ani': target_ani, 'reference_ids':str(input_indexs), 'target_id': target_id
+            , 'similar_frame': similar_frame}
+
+losses, generated = model(references =Variable(data['reference_frames']),target_lmark= Variable(data['target_lmark']),target_ani=   Variable(data['target_ani']),real_image=  Variable(data['target_rgb']), similar_frame = Variable(data['similar_frame']), infer=save_fake)
