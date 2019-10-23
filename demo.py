@@ -155,9 +155,9 @@ for i, data in enumerate(dataset):
     #     break
     minibatch = 1 
     if opt.no_ani:
-        generated = model.inference(Variable(references =Variable(data['reference_frames']),target_lmark= Variable(data['target_lmark']),target_ani=  None, real_image=  Variable(data['target_rgb']), similar_frame = Variable(data['similar_frame']))
+        generated = model.inference(references =Variable(data['reference_frames']),target_lmark= Variable(data['target_lmark']),target_ani=  None, real_image=  Variable(data['target_rgb']), similar_frame = Variable(data['similar_frame']))
     else:
-        generated = model.inference(Variable(references =Variable(data['reference_frames']),target_lmark= Variable(data['target_lmark']),target_ani=   Variable(data['target_ani']),real_image=  Variable(data['target_rgb']), similar_frame = Variable(data['similar_frame']))
+        generated = model.inference(references =Variable(data['reference_frames']),target_lmark= Variable(data['target_lmark']),target_ani= Variable(data['target_ani']),real_image=  Variable(data['target_rgb']), similar_frame = Variable(data['similar_frame']))
     
     img = torch.cat([generated.data.cpu(), data['target_rgb']], 0)
     torchvision.utils.save_image(img, 
