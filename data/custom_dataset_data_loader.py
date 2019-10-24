@@ -14,6 +14,12 @@ def CreateDataset(opt):
     print("dataset [%s] was created" % (dataset.name()))
     # dataset.__init__(opt)
     return dataset
+def collate_fn(batch):
+    batch = list(filter(lambda x : x is not None, batch))
+
+    print (len(batch))
+    return torch.utils.data.dataloader.default_collate(batch)
+
 
 class CustomDatasetDataLoader(BaseDataLoader):
     def name(self):
@@ -27,7 +33,7 @@ class CustomDatasetDataLoader(BaseDataLoader):
             batch_size=opt.batchSize,
             shuffle = not opt.serial_batches,
             num_workers=int(opt.nThreads),
-             drop_last=True)
+             drop_last=True, collate_fn= collate_fn)
 
     def load_data(self):
         return self.dataloader
