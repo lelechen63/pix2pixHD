@@ -52,8 +52,9 @@ for epoch in range(start_epoch, opt.niter + opt.niter_decay + 1):
         while  True:
             try:
                 data = next(dataset, start=epoch_iter)
-                break
-    # for i, data in enumerate(dataset, start=epoch_iter):
+                break# for i, data in enumerate(dataset, start=epoch_iter):
+            except:
+                continue
         iter_start_time = time.time()
         total_steps += opt.batchSize
         epoch_iter += opt.batchSize
