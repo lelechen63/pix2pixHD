@@ -32,6 +32,7 @@ if opt.debug:
  
 data_loader = CreateDataLoader(opt)
 dataset = data_loader.load_data()
+data_iter = iter(data_loader)
 dataset_size = len(data_loader)
 print('#training images = %d' % dataset_size)
 
@@ -51,7 +52,7 @@ for epoch in range(start_epoch, opt.niter + opt.niter_decay + 1):
     while True:
         while  True:
             try:
-                data = next(dataset)
+                data = data_iter.next()
                 break# for i, data in enumerate(dataset, start=epoch_iter):
             except:
                 print ('++++++')
