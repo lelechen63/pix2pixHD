@@ -16,8 +16,6 @@ def CreateDataset(opt):
     return dataset
 def collate_fn(batch):
     batch = list(filter(lambda x : x is not None, batch))
-
-    print (len(batch))
     return torch.utils.data.dataloader.default_collate(batch)
 
 
