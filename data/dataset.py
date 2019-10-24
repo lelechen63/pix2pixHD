@@ -70,89 +70,87 @@ class Lmark2rgbDataset(Dataset):
         return 'Lmark2rgbDataset'
 
     def __getitem__(self, index):
-        try:
-            v_id = self.data[index][0]
-            reference_id = self.data[index][1]
+        v_id = self.data[index][0]
+        reference_id = self.data[index][1]
 
-            video_path = os.path.join(self.root, 'unzip', v_id + '.mp4')
+        video_path = os.path.join(self.root, 'unzip', v_id + '.mp4')
+        
+        ani_video_path = os.path.join(self.root, 'unzip', v_id + '_ani.mp4')
+
+        rt_path = os.path.join(self.root, 'unzip', v_id + '_sRT.npy')
+
+
+        lmark_path = os.path.join(self.root, 'unzip', v_id + '.npy')
+
+
+        lmark = np.load(lmark_path)[:,:,:-1]
+        rt = np.load(rt_path)[:,:3]
+
+        v_length = lmark.shape[0]
+
+        real_video  = mmcv.VideoReader(video_path)
+        ani_video = mmcv.VideoReader(ani_video_path)
+
+        # sample frames for embedding network
+        input_indexs  = set(random.sample(range(0,64), self.num_frames))
+
+        # we randomly choose a target frame 
+        while True:
+            target_id =  np.random.choice([0, v_length - 1])
+            if target_id not in input_indexs:
+                break
+        reference_frames = []
+        reference_rt_diffs = []
+
+        target_rt = rt[target_id]
+        for t in input_indexs:
+
+            reference_rt_diffs.append( rt[t] - target_rt )
+            rgb_t =  mmcv.bgr2rgb(real_video[t]) 
+            lmark_t = lmark[t]
+            lmark_rgb = plot_landmarks( lmark_t)
+            # lmark_rgb = np.array(lmark_rgb) 
+            # resize 224 to 256
+            rgb_t  = cv2.resize(rgb_t, self.output_shape)
+            lmark_rgb  = cv2.resize(lmark_rgb, self.output_shape)
             
-            ani_video_path = os.path.join(self.root, 'unzip', v_id + '_ani.mp4')
+            # to tensor
+            rgb_t = self.transform(rgb_t)
+            lmark_rgb = self.transform(lmark_rgb)
+            reference_frames.append(torch.cat([rgb_t, lmark_rgb],0))  # (6, 256, 256)   
+        reference_rt_diffs = np.absolute(reference_rt_diffs)
+        reference_rt_diffs = np.mean(reference_rt_diffs, axis =1)
+        # similar_id  = input_indexs[np.argmin(r_diff)]
+        similar_id  = np.argmin(reference_rt_diffs)
+        reference_frames = torch.stack(reference_frames)
+        
+        ############################################################################
+        target_rgb = real_video[target_id]
+        reference_rgb = real_video[reference_id]
+        reference_ani = ani_video[reference_id]
+        target_ani = ani_video[target_id]
+        target_lmark = lmark[target_id]
 
-            rt_path = os.path.join(self.root, 'unzip', v_id + '_sRT.npy')
+        target_rgb = mmcv.bgr2rgb(target_rgb)
+        target_rgb = cv2.resize(target_rgb, self.output_shape)
+        target_rgb = self.transform(target_rgb)
 
+        target_ani = mmcv.bgr2rgb(target_ani)
+        target_ani = cv2.resize(target_ani, self.output_shape)
+        target_ani = self.transform(target_ani)
 
-            lmark_path = os.path.join(self.root, 'unzip', v_id + '.npy')
+        target_lmark = plot_landmarks(target_lmark)
+        target_lmark  = cv2.resize(target_lmark, self.output_shape)
+        target_lmark = self.transform(target_lmark)
 
-
-            lmark = np.load(lmark_path)[:,:,:-1]
-            rt = np.load(rt_path)[:,:3]
-
-            v_length = lmark.shape[0]
-
-            real_video  = mmcv.VideoReader(video_path)
-            ani_video = mmcv.VideoReader(ani_video_path)
-
-            # sample frames for embedding network
-            input_indexs  = set(random.sample(range(0,64), self.num_frames))
-
-            # we randomly choose a target frame 
-            while True:
-                target_id =  np.random.choice([0, v_length - 1])
-                if target_id not in input_indexs:
-                    break
-            reference_frames = []
-            reference_rt_diffs = []
-
-            target_rt = rt[target_id]
-            for t in input_indexs:
-
-                reference_rt_diffs.append( rt[t] - target_rt )
-                rgb_t =  mmcv.bgr2rgb(real_video[t]) 
-                lmark_t = lmark[t]
-                lmark_rgb = plot_landmarks( lmark_t)
-                # lmark_rgb = np.array(lmark_rgb) 
-                # resize 224 to 256
-                rgb_t  = cv2.resize(rgb_t, self.output_shape)
-                lmark_rgb  = cv2.resize(lmark_rgb, self.output_shape)
-                
-                # to tensor
-                rgb_t = self.transform(rgb_t)
-                lmark_rgb = self.transform(lmark_rgb)
-                reference_frames.append(torch.cat([rgb_t, lmark_rgb],0))  # (6, 256, 256)   
-            reference_rt_diffs = np.absolute(reference_rt_diffs)
-            reference_rt_diffs = np.mean(reference_rt_diffs, axis =1)
-            # similar_id  = input_indexs[np.argmin(r_diff)]
-            similar_id  = np.argmin(reference_rt_diffs)
-            reference_frames = torch.stack(reference_frames)
-            
-            ############################################################################
-            target_rgb = real_video[target_id]
-            reference_rgb = real_video[reference_id]
-            reference_ani = ani_video[reference_id]
-            target_ani = ani_video[target_id]
-            target_lmark = lmark[target_id]
-
-            target_rgb = mmcv.bgr2rgb(target_rgb)
-            target_rgb = cv2.resize(target_rgb, self.output_shape)
-            target_rgb = self.transform(target_rgb)
-
-            target_ani = mmcv.bgr2rgb(target_ani)
-            target_ani = cv2.resize(target_ani, self.output_shape)
-            target_ani = self.transform(target_ani)
-
-            target_lmark = plot_landmarks(target_lmark)
-            target_lmark  = cv2.resize(target_lmark, self.output_shape)
-            target_lmark = self.transform(target_lmark)
-
-            similar_frame = reference_frames[similar_id]
+        similar_frame = reference_frames[similar_id]
 
 
-            input_dic = {'v_id' : v_id, 'target_lmark': target_lmark, 'reference_frames': reference_frames,
-            'target_rgb': target_rgb, 'target_ani': target_ani, 'reference_ids':str(input_indexs), 'target_id': target_id
-            , 'similar_frame': similar_frame}
-            return input_dic
-        except:
-            self.__getitem__( (index + 1) % len(self.data)  )
+        input_dic = {'v_id' : v_id, 'target_lmark': target_lmark, 'reference_frames': reference_frames,
+        'target_rgb': target_rgb, 'target_ani': target_ani, 'reference_ids':str(input_indexs), 'target_id': target_id
+        , 'similar_frame': similar_frame}
+        return input_dic
+    
 
 
 
