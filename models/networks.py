@@ -355,7 +355,8 @@ class GlobalGenerator(nn.Module):
 
             self.off2d_1 = nn.Sequential(*[ nn.ReflectionPad2d(3), nn.Conv2d(6, 18 * 8, kernel_size=7, stride =1, padding=0), nn.InstanceNorm2d(18 * 8), nn.ReLU(True)])
 
-            self.def_conv_1 =nn.Sequential(*[ DeformConv(6, 64, 3,stride =1, padding =1, deformable_groups= 8), nn.InstanceNorm2d(64), nn.ReLU(True)])
+            self.def_conv_1 = DeformConv(6, 64, 3,stride =1, padding =1, deformable_groups= 8)
+            self.def_conv_1_norm = nn.Sequential(*[  nn.InstanceNorm2d(64), nn.ReLU(True)])
 
             self.off2d_2 = nn.Sequential(*[  nn.Conv2d(64, 18 * 8, kernel_size=3, stride =1, padding=1), nn.InstanceNorm2d(18 * 8), nn.ReLU(True)])
 
@@ -413,6 +414,7 @@ class GlobalGenerator(nn.Module):
             offset_1 = self.off2d_1(feature)
 
             fea = self.def_conv_1(feature, offset_1)
+            fea = self.def_conv_1_norm(fea)
 
             offset_2 = self.off2d_2(fea)
             #######################################
