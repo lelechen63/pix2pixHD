@@ -11,7 +11,7 @@ from torch.nn import functional as F
 import os
 import imp
 from models.vgg import Cropped_VGG19
-from def_conv.modules.deform_conv import DeformConv
+# from def_conv.modules.deform_conv import DeformConv
 
 ###############################################################################
 # Functions
@@ -34,13 +34,13 @@ def get_norm_layer(norm_type='instance'):
         raise NotImplementedError('normalization layer [%s] is not found' % norm_type)
     return norm_layer
 
-def define_G(input_nc, output_nc, netG, pad_type,  norm='instance',ngf= 64, attention = True, lstm = False, gpu_ids=[]):    
+def define_G(input_nc, output_nc, netG, pad_type,  norm='instance',ngf= 64, attention = True, lstm = False,deform = False, gpu_ids=[]):    
     norm_layer = get_norm_layer(norm_type=norm)     
     if netG == 'global':
         if lstm == False:    
-            netG = GlobalGenerator( input_nc, output_nc, pad_type, norm_layer,ngf,attention)       
+            netG = GlobalGenerator( input_nc, output_nc, pad_type, norm_layer,ngf,attention, deform)       
         else:
-            netG = GlobalGenerator_lstm( input_nc, output_nc, pad_type, norm_layer,ngf,attention)
+            netG = GlobalGenerator_lstm( input_nc, output_nc, pad_type, norm_layer,ngf,attention,deform)
     elif netG == 'local':        
         netG = LocalEnhancer(input_nc, output_nc, ngf, n_downsample_global, n_blocks_global, 
                                   n_local_enhancers, n_blocks_local, norm_layer)
@@ -234,7 +234,7 @@ class GlobalGenerator(nn.Module):
     def __init__(self,input_nc, output_nc, pad_type='reflect', norm_layer=nn.BatchNorm2d, ngf = 64, attention = True, deform= False ):
         super(GlobalGenerator, self).__init__()        
         activ = 'relu'    
-
+        self.deform = deform
         self.attention = attention
         model = [nn.ReflectionPad2d(3), nn.Conv2d(input_nc, ngf, kernel_size=7, padding=0), norm_layer(ngf), nn.ReLU(True) ]
         ### downsample
