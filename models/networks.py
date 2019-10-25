@@ -407,7 +407,6 @@ class GlobalGenerator(nn.Module):
 
             # foreground_feature = self.foregroundNet( ani_img)  # should be torch.cat([ani_img, similar_img]) and change foreground to 6 channel input
 
-            forMask_feature = torch.cat([foreground_feature, I_feature ], 1)
 
             
 
@@ -431,7 +430,9 @@ class GlobalGenerator(nn.Module):
 
              
             fea = self.def_conv_3(fea, offset_3)
-            forMask_feature = self.def_conv3_norm(fea)
+            foreground_feature = self.def_conv3_norm(fea)
+
+        forMask_feature = torch.cat([foreground_feature, I_feature ], 1)
 
 
         beta = self.beta(forMask_feature)
