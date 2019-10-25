@@ -406,10 +406,6 @@ class GlobalGenerator(nn.Module):
             foreground_feature = self.foregroundNet( torch.cat([ani_img, similar_img], 1) )  
 
             # foreground_feature = self.foregroundNet( ani_img)  # should be torch.cat([ani_img, similar_img]) and change foreground to 6 channel input
-
-
-            
-
         else:
             feature = torch.cat([ani_img, similar_img], 1)
             offset_1 = self.off2d_1(feature)
