@@ -57,7 +57,6 @@ for epoch in range(start_epoch, opt.niter + opt.niter_decay + 1):
         save_fake = total_steps % opt.display_freq == display_delta
 
         ############## Forward Pass ######################
-        print ('----------------')
         if opt.no_ani:
             losses, generated = model(references =Variable(data['reference_frames']),target_lmark= Variable(data['target_lmark']),target_ani=  None,real_image=  Variable(data['target_rgb']), similar_frame = data['similar_frame'], infer=save_fake)
         else:
