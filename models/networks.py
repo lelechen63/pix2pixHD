@@ -353,17 +353,17 @@ class GlobalGenerator(nn.Module):
             
         else:
 
-            self.off2d_1 = nn.Sequential(*[ nn.ReflectionPad2d(3), nn.Conv2d(6, 18 * 8, kernel_size=7, padding=0), nn.InstanceNorm2d(18 * 8), nn.ReLU(True)])
+            self.off2d_1 = nn.Sequential(*[ nn.ReflectionPad2d(3), nn.Conv2d(6, 18 * 8, kernel_size=7, stride =1, padding=0), nn.InstanceNorm2d(18 * 8), nn.ReLU(True)])
 
-            self.def_conv_1 =nn.Sequential(*[ DeformConv(6, 64, 3, padding =1, deformable_groups= 8), nn.InstanceNorm2d(64), nn.ReLU(True)])
+            self.def_conv_1 =nn.Sequential(*[ DeformConv(6, 64, 3,stride =1, padding =1, deformable_groups= 8), nn.InstanceNorm2d(64), nn.ReLU(True)])
 
-            self.off2d_2 = nn.Sequential(*[  nn.Conv2d(64, 18 * 8, kernel_size=3, padding=1), nn.InstanceNorm2d(18 * 8), nn.ReLU(True)])
+            self.off2d_2 = nn.Sequential(*[  nn.Conv2d(64, 18 * 8, kernel_size=3, stride =1, padding=1), nn.InstanceNorm2d(18 * 8), nn.ReLU(True)])
 
-            self.def_conv_2 = nn.Sequential(*[ DeformConv(6, 128, 3, padding =1, deformable_groups= 8), nn.InstanceNorm2d(128), nn.ReLU(True)])
+            self.def_conv_2 = nn.Sequential(*[ DeformConv(6, 128, 3,stride =1, padding =1, deformable_groups= 8), nn.InstanceNorm2d(128), nn.ReLU(True)])
 
-            self.off2d_3 = nn.Sequential(*[  nn.Conv2d(128, 18 * 8, kernel_size=3, padding=1), nn.InstanceNorm2d(18 * 8), nn.ReLU(True)])
+            self.off2d_3 = nn.Sequential(*[  nn.Conv2d(128, 18 * 8, kernel_size=3, stride =1,padding=1), nn.InstanceNorm2d(18 * 8), nn.ReLU(True)])
 
-            self.def_conv_3 = nn.Sequential(*[ DeformConv( 128, 64, 3, padding =1, deformable_groups= 8), nn.InstanceNorm2d(64), nn.ReLU(True)])
+            self.def_conv_3 = nn.Sequential(*[ DeformConv( 128, 64, 3,stride =1, padding =1, deformable_groups= 8), nn.InstanceNorm2d(64), nn.ReLU(True)])
 
         self.beta  = Conv2dBlock(128, 1, 7, 1, 3,
                                     norm='none',
