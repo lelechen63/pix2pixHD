@@ -37,7 +37,7 @@ class Lmark2rgbDataset(Dataset):
         """
         
         self.output_shape   = tuple([opt.loadSize, opt.loadSize])
-        self.num_frames = 4  
+        self.num_frames = opt.num_frames
         self.opt = opt
         self.root  = opt.dataroot
 
