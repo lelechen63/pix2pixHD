@@ -11,7 +11,7 @@ from torch.nn import functional as F
 import os
 import imp
 from models.vgg import Cropped_VGG19
-from def_conv.modules.deform_conv import DeformConv
+from models.def_conv.modules.deform_conv import DeformConv
 
 ###############################################################################
 # Functions
