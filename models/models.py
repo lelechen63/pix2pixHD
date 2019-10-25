@@ -12,7 +12,7 @@ def create_model(opt):
         from .Lmark2RGB_model import Lmark2RGBModel1, InferenceModel1
         if opt.isTrain:
             model = Lmark2RGBModel1()
-    else:
+        else:
            model = InferenceModel1()
     elif opt.model == 'base2':
         from .Lmark2RGB_model import Lmark2RGBModel2, InferenceModel2
