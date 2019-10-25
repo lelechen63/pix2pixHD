@@ -367,10 +367,6 @@ def plot_landmarks( landmarks):
 
     cv2.polylines(blank_image, np.int32([landmarks[48:60]]) , True, (0, 0, 255), 2)
 
-
-
-
-
     return blank_image
 
 
