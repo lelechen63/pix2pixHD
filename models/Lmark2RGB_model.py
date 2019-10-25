@@ -32,9 +32,10 @@ class Lmark2RGBModel1(BaseModel):
 
         self.attention = not opt.no_att
         self.lstm = opt.use_lstm
+        self.deform = opt.use_deform
 
         # self.lstm = not opt.no_lstm
-        self.netG = networks.define_G(input_nc = input_nc, output_nc =opt.output_nc,netG = opt.netG, pad_type='reflect',norm = opt.norm, ngf = opt.ngf, attention = self.attention, lstm = self.lstm, gpu_ids=self.gpu_ids)          
+        self.netG = networks.define_G(input_nc = input_nc, output_nc =opt.output_nc,netG = opt.netG, pad_type='reflect',norm = opt.norm, ngf = opt.ngf, attention = self.attention, lstm = self.lstm, deform = self.deform gpu_ids=self.gpu_ids)          
 
         # Discriminator network
         if self.isTrain:
