@@ -360,11 +360,13 @@ class GlobalGenerator(nn.Module):
 
             self.off2d_2 = nn.Sequential(*[  nn.Conv2d(64, 18 * 8, kernel_size=3, stride =1, padding=1), nn.InstanceNorm2d(18 * 8), nn.ReLU(True)])
 
-            self.def_conv_2 = nn.Sequential(*[ DeformConv(6, 128, 3,stride =1, padding =1, deformable_groups= 8), nn.InstanceNorm2d(128), nn.ReLU(True)])
+            self.def_conv_2 = DeformConv(6, 128, 3,stride =1, padding =1, deformable_groups= 8)
+            self.def_conv_2_norm =  nn.Sequential(*[  nn.InstanceNorm2d(128), nn.ReLU(True)])
 
             self.off2d_3 = nn.Sequential(*[  nn.Conv2d(128, 18 * 8, kernel_size=3, stride =1,padding=1), nn.InstanceNorm2d(18 * 8), nn.ReLU(True)])
 
-            self.def_conv_3 = nn.Sequential(*[ DeformConv( 128, 64, 3,stride =1, padding =1, deformable_groups= 8), nn.InstanceNorm2d(64), nn.ReLU(True)])
+            self.def_conv_3 = DeformConv( 128, 64, 3,stride =1, padding =1, deformable_groups= 8)
+            self.def_conv3_norm = nn.Sequential(*[  nn.InstanceNorm2d(64), nn.ReLU(True)])
 
         self.beta  = Conv2dBlock(128, 1, 7, 1, 3,
                                     norm='none',
@@ -419,12 +421,17 @@ class GlobalGenerator(nn.Module):
             offset_2 = self.off2d_2(fea)
             #######################################
 
-            fea = self.def_conv_2(ani_img, off2d_2)
+            fea = self.def_conv_2(ani_img, offset_2)
+
+            fea = self.def_conv_2_norm(fea)
 
             off2d_3 = self.off2d_3(fea)
 
 
-            forMask_feature = self.def_conv_3(fea, off2d_3)
+             
+            fea = self.def_conv_3(fea, off2d_3)
+            forMask_feature = self.def_conv3_norm(fea)
+
 
         beta = self.beta(forMask_feature)
 
