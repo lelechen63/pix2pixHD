@@ -418,14 +418,14 @@ class GlobalGenerator(nn.Module):
         forMask_feature = torch.cat([foreground_feature, I_feature ], 1)
         beta = self.beta(forMask_feature)
         with torch.no_grad():
-            background = similar_img.detach().clone()
+            # background = similar_img.detach().clone()
             mask = ani_img> -0.9
-            background[mask] = -1 
+            similar_img[mask] = -1 
 
-        image = (1- beta) * background + beta * face_foreground
+        image = (1- beta) * similar_img + beta * face_foreground
         
 
-        return [image, background, face_foreground, beta, alpha, I_hat]
+        return [image, similar_img, face_foreground, beta, alpha, I_hat]
 
 
 class GlobalGenerator_lstm(nn.Module):
