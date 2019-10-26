@@ -58,9 +58,11 @@ for epoch in range(start_epoch, opt.niter + opt.niter_decay + 1):
 
         ############## Forward Pass ######################
         if opt.no_ani:
-            losses, generated = model(references =Variable(data['reference_frames']),target_lmark= Variable(data['target_lmark']),target_ani=  None,real_image=  Variable(data['target_rgb']), similar_frame = data['similar_frame'], infer=save_fake)
+            losses, generated = model(references =Variable(data['reference_frames']),target_lmark= Variable(data['target_lmark']),target_ani=  None,
+            real_image=  Variable(data['target_rgb']), similar_frame = data['similar_frame'], infer=save_fake)
         else:
-            losses, generated = model(references =Variable(data['reference_frames']),target_lmark= Variable(data['target_lmark']),target_ani=   Variable(data['target_ani']),real_image=  Variable(data['target_rgb']), similar_frame = data['similar_frame'], infer=save_fake)
+            losses, generated = model(references =Variable(data['reference_frames']),target_lmark= Variable(data['target_lmark']),target_ani= Variable(data['target_ani']),
+            real_image=  Variable(data['target_rgb']), similar_frame = data['similar_frame'], infer=save_fake)
         # sum per device losses
         losses = [ torch.mean(x) if not isinstance(x, int) else x for x in losses ]
         loss_dict = dict(zip(model.module.loss_names, losses))
@@ -99,7 +101,7 @@ for epoch in range(start_epoch, opt.niter + opt.niter_decay + 1):
         if save_fake and len(generated)> 1:
             info = [str(data['v_id']).split(',')[0], str(data['reference_ids']).split('}')[0], str(data['target_id'] ).split(',')[0]]
             info = '-'.join(info).replace('/','-')
-            if opt.num_frames > 1:
+            if opt.num_frames >= 4:
                 visuals = OrderedDict([(info + 'reference1', util.tensor2im(data['reference_frames'][0, 0,:3])),
                                         ('reference2', util.tensor2im(data['reference_frames'][0, 1,:3])),
                                         ('reference3', util.tensor2im(data['reference_frames'][0, 2,:3])),
