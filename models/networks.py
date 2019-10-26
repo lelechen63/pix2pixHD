@@ -388,7 +388,7 @@ class GlobalGenerator(nn.Module):
         I_feature = self.decoder(feature)
 
         I_hat = self.rgb_conv(I_feature)        
-        ani_img = g_in[:,3:,:,:].contiguous()
+        ani_img = g_in[:,3:,:,:]
         similar_img = similar_img[:,:3]
         alpha = self.alpha_conv(I_feature)
 
@@ -405,7 +405,7 @@ class GlobalGenerator(nn.Module):
 
             offset_2 = self.off2d_2(fea)
 
-            fea = self.def_conv_2(ani_img, offset_2)
+            fea = self.def_conv_2(ani_img.contiguous(), offset_2)
             fea = self.def_conv_2_norm(fea)
 
             offset_3 = self.off2d_3(fea)
