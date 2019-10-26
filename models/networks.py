@@ -399,7 +399,6 @@ class GlobalGenerator(nn.Module):
         else:
             feature = torch.cat([ani_img, similar_img], 1)
             offset_1 = self.off2d_1(feature)
-            print(offset_1.shape)
 
             fea = self.def_conv_1(feature, offset_1)
             fea = self.def_conv_1_norm(fea)
