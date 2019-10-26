@@ -44,115 +44,116 @@ display_delta = total_steps % opt.display_freq
 print_delta = total_steps % opt.print_freq
 save_delta = total_steps % opt.save_latest_freq
 ##############
-for epoch in range(start_epoch, opt.niter + opt.niter_decay + 1):
-    epoch_start_time = time.time()
-    if epoch != start_epoch:
-        epoch_iter = epoch_iter % dataset_size
-    for i, data in enumerate(dataset, start=epoch_iter):
-        iter_start_time = time.time()
-        total_steps += opt.batchSize
-        epoch_iter += opt.batchSize
+with torch.autograd.set_detect_anomaly(False):
+    for epoch in range(start_epoch, opt.niter + opt.niter_decay + 1):
+        epoch_start_time = time.time()
+        if epoch != start_epoch:
+            epoch_iter = epoch_iter % dataset_size
+        for i, data in enumerate(dataset, start=epoch_iter):
+            iter_start_time = time.time()
+            total_steps += opt.batchSize
+            epoch_iter += opt.batchSize
 
-        # whether to collect output images
-        save_fake = total_steps % opt.display_freq == display_delta
+            # whether to collect output images
+            save_fake = total_steps % opt.display_freq == display_delta
 
-        ############## Forward Pass ######################
-        if opt.no_ani:
-            losses, generated = model(references =Variable(data['reference_frames']),target_lmark= Variable(data['target_lmark']),target_ani=  None,
-            real_image=  Variable(data['target_rgb']), similar_frame = data['similar_frame'], infer=save_fake)
-        else:
-            losses, generated = model(references =Variable(data['reference_frames']),target_lmark= Variable(data['target_lmark']),target_ani= Variable(data['target_ani']),
-            real_image=  Variable(data['target_rgb']), similar_frame = data['similar_frame'], infer=save_fake)
-        # sum per device losses
-        losses = [ torch.mean(x) if not isinstance(x, int) else x for x in losses ]
-        loss_dict = dict(zip(model.module.loss_names, losses))
-
-        # calculate final loss scalar
-        loss_D = (loss_dict['D_fake'] + loss_dict['D_real']) * 0.5
-        loss_G = loss_dict['G_GAN'] + loss_dict.get('G_GAN_Feat',0) + loss_dict.get('G_VGG',0) +  loss_dict.get('G_CNT',0) + 0.001 * loss_dict.get('G_PIX',0)
-
-        ############### Backward Pass ####################
-        # update generator weights
-        model.module.optimizer_G.zero_grad()
-        loss_G.backward()
-        model.module.optimizer_G.step()
-
-        # update discriminator weights
-        model.module.optimizer_D.zero_grad()
-        loss_D.backward()
-        model.module.optimizer_D.step()
-
-        #call(["nvidia-smi", "--format=csv", "--query-gpu=memory.used,memory.free"]) 
-
-        ############## Display results and errors ##########
-        ### print out errors
-        # print   (loss_dict['D_fake'], loss_dict['D_real'],  loss_dict['G_GAN'],  loss_dict.get('G_GAN_Feat',0),  loss_dict.get('G_VGG',0)) 
-        errors = {}
-        if total_steps % opt.print_freq == print_delta:
-            for k, v in loss_dict.items():
-                # print (k,v)
-                errors[k] = v.item()
-            # errors = {k: v.data[0] if not isinstance(v, int) else v for k, v in loss_dict.items()}
-            t = (time.time() - iter_start_time) / opt.batchSize
-            visualizer.print_current_errors(epoch, epoch_iter, errors, t)
-            visualizer.plot_current_errors(errors, total_steps)
-
-        ### display output images
-        if save_fake and len(generated)> 1:
-            info = [str(data['v_id']).split(',')[0], str(data['reference_ids']).split('}')[0], str(data['target_id'] ).split(',')[0]]
-            info = '-'.join(info).replace('/','-')
-            if opt.num_frames >= 4:
-                visuals = OrderedDict([(info + 'reference1', util.tensor2im(data['reference_frames'][0, 0,:3])),
-                                        ('reference2', util.tensor2im(data['reference_frames'][0, 1,:3])),
-                                        ('reference3', util.tensor2im(data['reference_frames'][0, 2,:3])),
-                                        ('reference4', util.tensor2im(data['reference_frames'][0, 3,:3])),
-                                       ('target_lmark', util.tensor2im(data['target_lmark'][0])),
-                                       ('target_ani', util.tensor2im(data['target_ani'][0])),
-                                       ('synthesized_image', util.tensor2im(generated[0].data[0])),
-                                       ('masked_similar_img', util.tensor2im(generated[1].data[0])),
-                                       ('face_foreground', util.tensor2im(generated[2].data[0])),
-                                       ('beta', util.tensor2im(generated[3].data[0])),
-                                       ('alpha', util.tensor2im(generated[4].data[0])),
-                                       ('I_hat', util.tensor2im(generated[5].data[0])),
-                                       ('real_image', util.tensor2im(data['target_rgb'][0]))])
+            ############## Forward Pass ######################
+            if opt.no_ani:
+                losses, generated = model(references =Variable(data['reference_frames']),target_lmark= Variable(data['target_lmark']),target_ani=  None,
+                real_image=  Variable(data['target_rgb']), similar_frame = data['similar_frame'], infer=save_fake)
             else:
-                visuals = OrderedDict([(info + 'reference1', util.tensor2im(data['reference_frames'][0, 0,:3])),
-                                       ('target_lmark', util.tensor2im(data['target_lmark'][0])),
-                                       ('target_ani', util.tensor2im(data['target_ani'][0])),
-                                       ('synthesized_image', util.tensor2im(generated[0].data[0])),
-                                       ('masked_similar_img', util.tensor2im(generated[1].data[0])),
-                                       ('face_foreground', util.tensor2im(generated[2].data[0])),
-                                       ('beta', util.tensor2im(generated[3].data[0])),
-                                       ('alpha', util.tensor2im(generated[4].data[0])),
-                                       ('I_hat', util.tensor2im(generated[5].data[0])),
-                                       ('real_image', util.tensor2im(data['target_rgb'][0]))])
-            visualizer.display_current_results(visuals, epoch, total_steps)
+                losses, generated = model(references =Variable(data['reference_frames']),target_lmark= Variable(data['target_lmark']),target_ani= Variable(data['target_ani']),
+                real_image=  Variable(data['target_rgb']), similar_frame = data['similar_frame'], infer=save_fake)
+            # sum per device losses
+            losses = [ torch.mean(x) if not isinstance(x, int) else x for x in losses ]
+            loss_dict = dict(zip(model.module.loss_names, losses))
 
-        ### save latest model
-        if total_steps % opt.save_latest_freq == save_delta:
-            print('saving the latest model (epoch %d, total_steps %d)' % (epoch, total_steps))
-            model.module.save('latest')            
-            np.savetxt(iter_path, (epoch, epoch_iter), delimiter=',', fmt='%d')
+            # calculate final loss scalar
+            loss_D = (loss_dict['D_fake'] + loss_dict['D_real']) * 0.5
+            loss_G = loss_dict['G_GAN'] + loss_dict.get('G_GAN_Feat',0) + loss_dict.get('G_VGG',0) +  loss_dict.get('G_CNT',0) + 0.001 * loss_dict.get('G_PIX',0)
 
-        if epoch_iter >= dataset_size:
-            break
-       
-    # end of epoch 
-    iter_end_time = time.time()
-    print('End of epoch %d / %d \t Time Taken: %d sec' %
-          (epoch, opt.niter + opt.niter_decay, time.time() - epoch_start_time))
+            ############### Backward Pass ####################
+            # update generator weights
+            model.module.optimizer_G.zero_grad()
+            loss_G.backward()
+            model.module.optimizer_G.step()
 
-    ### save model for this epoch
-    if epoch % opt.save_epoch_freq == 0:
-        print('saving the model at the end of epoch %d, iters %d' % (epoch, total_steps))        
-        model.module.save('latest')
-        model.module.save(epoch)
-        np.savetxt(iter_path, (epoch+1, 0), delimiter=',', fmt='%d')
+            # update discriminator weights
+            model.module.optimizer_D.zero_grad()
+            loss_D.backward()
+            model.module.optimizer_D.step()
 
-    ### instead of only training the local enhancer, train the entire network after certain iterations
-    if (opt.niter_fix_global != 0) and (epoch == opt.niter_fix_global):
-        model.module.update_fixed_params()
+            #call(["nvidia-smi", "--format=csv", "--query-gpu=memory.used,memory.free"]) 
 
-    ### linearly decay learning rate after certain iterations
-    if epoch > opt.niter:
-        model.module.update_learning_rate()
+            ############## Display results and errors ##########
+            ### print out errors
+            # print   (loss_dict['D_fake'], loss_dict['D_real'],  loss_dict['G_GAN'],  loss_dict.get('G_GAN_Feat',0),  loss_dict.get('G_VGG',0)) 
+            errors = {}
+            if total_steps % opt.print_freq == print_delta:
+                for k, v in loss_dict.items():
+                    # print (k,v)
+                    errors[k] = v.item()
+                # errors = {k: v.data[0] if not isinstance(v, int) else v for k, v in loss_dict.items()}
+                t = (time.time() - iter_start_time) / opt.batchSize
+                visualizer.print_current_errors(epoch, epoch_iter, errors, t)
+                visualizer.plot_current_errors(errors, total_steps)
+
+            ### display output images
+            if save_fake and len(generated)> 1:
+                info = [str(data['v_id']).split(',')[0], str(data['reference_ids']).split('}')[0], str(data['target_id'] ).split(',')[0]]
+                info = '-'.join(info).replace('/','-')
+                if opt.num_frames >= 4:
+                    visuals = OrderedDict([(info + 'reference1', util.tensor2im(data['reference_frames'][0, 0,:3])),
+                                            ('reference2', util.tensor2im(data['reference_frames'][0, 1,:3])),
+                                            ('reference3', util.tensor2im(data['reference_frames'][0, 2,:3])),
+                                            ('reference4', util.tensor2im(data['reference_frames'][0, 3,:3])),
+                                        ('target_lmark', util.tensor2im(data['target_lmark'][0])),
+                                        ('target_ani', util.tensor2im(data['target_ani'][0])),
+                                        ('synthesized_image', util.tensor2im(generated[0].data[0])),
+                                        ('masked_similar_img', util.tensor2im(generated[1].data[0])),
+                                        ('face_foreground', util.tensor2im(generated[2].data[0])),
+                                        ('beta', util.tensor2im(generated[3].data[0])),
+                                        ('alpha', util.tensor2im(generated[4].data[0])),
+                                        ('I_hat', util.tensor2im(generated[5].data[0])),
+                                        ('real_image', util.tensor2im(data['target_rgb'][0]))])
+                else:
+                    visuals = OrderedDict([(info + 'reference1', util.tensor2im(data['reference_frames'][0, 0,:3])),
+                                        ('target_lmark', util.tensor2im(data['target_lmark'][0])),
+                                        ('target_ani', util.tensor2im(data['target_ani'][0])),
+                                        ('synthesized_image', util.tensor2im(generated[0].data[0])),
+                                        ('masked_similar_img', util.tensor2im(generated[1].data[0])),
+                                        ('face_foreground', util.tensor2im(generated[2].data[0])),
+                                        ('beta', util.tensor2im(generated[3].data[0])),
+                                        ('alpha', util.tensor2im(generated[4].data[0])),
+                                        ('I_hat', util.tensor2im(generated[5].data[0])),
+                                        ('real_image', util.tensor2im(data['target_rgb'][0]))])
+                visualizer.display_current_results(visuals, epoch, total_steps)
+
+            ### save latest model
+            if total_steps % opt.save_latest_freq == save_delta:
+                print('saving the latest model (epoch %d, total_steps %d)' % (epoch, total_steps))
+                model.module.save('latest')            
+                np.savetxt(iter_path, (epoch, epoch_iter), delimiter=',', fmt='%d')
+
+            if epoch_iter >= dataset_size:
+                break
+        
+        # end of epoch 
+        iter_end_time = time.time()
+        print('End of epoch %d / %d \t Time Taken: %d sec' %
+            (epoch, opt.niter + opt.niter_decay, time.time() - epoch_start_time))
+
+        ### save model for this epoch
+        if epoch % opt.save_epoch_freq == 0:
+            print('saving the model at the end of epoch %d, iters %d' % (epoch, total_steps))        
+            model.module.save('latest')
+            model.module.save(epoch)
+            np.savetxt(iter_path, (epoch+1, 0), delimiter=',', fmt='%d')
+
+        ### instead of only training the local enhancer, train the entire network after certain iterations
+        if (opt.niter_fix_global != 0) and (epoch == opt.niter_fix_global):
+            model.module.update_fixed_params()
+
+        ### linearly decay learning rate after certain iterations
+        if epoch > opt.niter:
+            model.module.update_learning_rate()

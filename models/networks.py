@@ -347,20 +347,20 @@ class GlobalGenerator(nn.Module):
             self.foregroundNet = nn.Sequential(*model)
             
         else:
-            self.conv_first =  nn.Sequential(*[nn.ReflectionPad2d(3), nn.Conv2d(6, 64, kernel_size=7, padding=0), norm_layer(64), nn.ReLU(True) ])
-            self.off2d_1 = nn.Sequential(*[  nn.Conv2d(64, 18 * 8, kernel_size=3, stride =1, padding=1), nn.InstanceNorm2d(18 * 8), nn.ReLU(True)])
+            self.conv_first =  nn.Sequential(*[nn.ReflectionPad2d(3), nn.Conv2d(6, 64, kernel_size=7, padding=0), norm_layer(64), nn.ReLU(False) ])
+            self.off2d_1 = nn.Sequential(*[  nn.Conv2d(64, 18 * 8, kernel_size=3, stride =1, padding=1), nn.InstanceNorm2d(18 * 8), nn.ReLU(False)])
             self.def_conv_1 = DeformConv(64, 64, 3,stride =1, padding =1, deformable_groups= 8)
-            self.def_conv_1_norm = nn.Sequential(*[  nn.InstanceNorm2d(64), nn.ReLU(True)])
+            self.def_conv_1_norm = nn.Sequential(*[  nn.InstanceNorm2d(64), nn.ReLU(False)])
 
-            self.off2d_2 = nn.Sequential(*[  nn.Conv2d(64, 18 * 8, kernel_size=3, stride =1, padding=1), nn.InstanceNorm2d(18 * 8), nn.ReLU(True)])
+            self.off2d_2 = nn.Sequential(*[  nn.Conv2d(64, 18 * 8, kernel_size=3, stride =1, padding=1), nn.InstanceNorm2d(18 * 8), nn.ReLU(False)])
 
             self.def_conv_2 = DeformConv(3, 128, 3,stride =1, padding =1, deformable_groups= 8)
-            self.def_conv_2_norm =  nn.Sequential(*[  nn.InstanceNorm2d(128), nn.ReLU(True)])
+            self.def_conv_2_norm =  nn.Sequential(*[  nn.InstanceNorm2d(128), nn.ReLU(False)])
 
-            self.off2d_3 = nn.Sequential(*[  nn.Conv2d(128, 18 * 8, kernel_size=3, stride =1,padding=1), nn.InstanceNorm2d(18 * 8), nn.ReLU(True)])
+            self.off2d_3 = nn.Sequential(*[  nn.Conv2d(128, 18 * 8, kernel_size=3, stride =1,padding=1), nn.InstanceNorm2d(18 * 8), nn.ReLU(False)])
 
             self.def_conv_3 = DeformConv( 128, 64, 3,stride =1, padding =1, deformable_groups= 8)
-            self.def_conv3_norm = nn.Sequential(*[  nn.InstanceNorm2d(64), nn.ReLU(True)])
+            self.def_conv3_norm = nn.Sequential(*[  nn.InstanceNorm2d(64), nn.ReLU(False)])
 
         self.beta  = Conv2dBlock(128, 1, 7, 1, 3,
                                     norm='none',
@@ -390,7 +390,8 @@ class GlobalGenerator(nn.Module):
         if not self.deform:
             foreground_feature = self.foregroundNet( torch.cat([ani_img, similar_img], 1) )  
             # foreground_feature = self.foregroundNet( ani_img)  # should be torch.cat([ani_img, similar_img]) and change foreground to 6 channel input
-        else:
+        else:   
+            # with bug, can not be solved yet !!!!!!!!!!!!!!!!!!!!
             feature = torch.cat([ani_img, similar_img], 1)
             fea = self.conv_first(feature)
             offset_1 = self.off2d_1(fea)
