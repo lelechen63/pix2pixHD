@@ -389,7 +389,9 @@ class GlobalGenerator(nn.Module):
 
         I_hat = self.rgb_conv(I_feature)        
         ani_img = g_in[:,3:,:,:]
+        ani_img.data = ani_img.data.contiguous()
         similar_img = similar_img[:,:3]
+        similar_img.data = similar_img.data.contiguous()
         alpha = self.alpha_conv(I_feature)
 
         face_foreground = (1 - alpha) * ani_img + alpha * I_hat
