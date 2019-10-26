@@ -424,7 +424,7 @@ class GlobalGenerator(nn.Module):
         image = (1- beta) * similar_img + beta * face_foreground
         
 
-        return [image, background, face_foreground, beta, alpha, I_hat]
+        return [image, similar_img, face_foreground, beta, alpha, I_hat]
 
 
 class GlobalGenerator_lstm(nn.Module):
