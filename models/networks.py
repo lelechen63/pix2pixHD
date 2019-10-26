@@ -324,13 +324,8 @@ class GlobalGenerator(nn.Module):
                                    norm='none',
                                    activation='tanh',
                                    pad_type=pad_type)
-        
-
-        
-
+    
         self.embedder = Embedder()
-
-
         self.mlp = MLP(512,
                        get_num_adain_params(self.decoder),
                        256,
@@ -389,8 +384,6 @@ class GlobalGenerator(nn.Module):
         I_hat = self.rgb_conv(I_feature)        
         ani_img = g_in[:,3:,:,:]
         ani_img.data = ani_img.data.contiguous()
-        # similar_img = similar_img[:,:3]
-        # similar_img.data = similar_img.data.contiguous()
         alpha = self.alpha_conv(I_feature)
 
         face_foreground = (1 - alpha) * ani_img + alpha * I_hat
@@ -417,10 +410,8 @@ class GlobalGenerator(nn.Module):
 
         forMask_feature = torch.cat([foreground_feature, I_feature ], 1)
         beta = self.beta(forMask_feature)
-        with torch.no_grad():
-            # background = similar_img.detach().clone()
-            mask = ani_img> -0.9
-            similar_img[mask] = -1 
+
+        similar_img[ani_img] = -1 
 
         image = (1- beta) * similar_img + beta * face_foreground
         
