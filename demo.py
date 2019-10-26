@@ -150,7 +150,6 @@ for item in ggdata[:10]:
     save_path = os.path.join('./demo', opt.name,v_id.split('/')[-2]+ '_' +  v_id.split('/')[-1])
     # test
 
-
     for i, data in enumerate(dataset):
         # if i >= opt.how_many:
         #     break
@@ -167,3 +166,4 @@ for item in ggdata[:10]:
 
 
 # losses, generated = model(references =Variable(data['reference_frames']),target_lmark= Variable(data['target_lmark']),target_ani=   Variable(data['target_ani']),real_image=  Variable(data['target_rgb']), similar_frame = Variable(data['similar_frame']), infer=save_fake)
+ 

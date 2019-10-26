@@ -97,37 +97,3 @@ class DeformConvPack(DeformConv):
                                           self.deformable_groups,
                                           self.im2col_step)
 
-
-class DeformConvAni(DeformConv):
-
-    def __init__(self, in_channels, out_channels,
-                 kernel_size, stride, padding,
-                 dilation=1, groups=1, deformable_groups=1, im2col_step=64, bias=True, lr_mult=0.1):
-        super(DeformConvAni, self).__init__(in_channels, out_channels,
-                                  kernel_size, stride, padding, dilation, groups, deformable_groups, im2col_step, bias)
-
-        out_channels = self.deformable_groups * 2 * self.kernel_size[0] * self.kernel_size[1]
-        self.conv_offset = nn.Conv2d(self.in_channels,
-                                          out_channels,
-                                          kernel_size=self.kernel_size,
-                                          stride=self.stride,
-                                          padding=self.padding,
-                                          bias=True)
-        self.conv_offset.lr_mult = lr_mult
-        self.init_offset()
-
-    def init_offset(self):
-        self.conv_offset.weight.data.zero_()
-        self.conv_offset.bias.data.zero_()
-
-    def forward(self, x,y):  ## x is the reference image , y is the target animation image
-        offset = self.conv_offset(torch.cat([x,y], 1))
-        return DeformConvFunction.apply(x, offset, 
-                                          self.weight, 
-                                          self.bias, 
-                                          self.stride, 
-                                          self.padding, 
-                                          self.dilation, 
-                                          self.groups,
-                                          self.deformable_groups,
-                                          self.im2col_step)

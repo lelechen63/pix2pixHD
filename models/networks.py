@@ -373,18 +373,13 @@ class GlobalGenerator(nn.Module):
                                     activation='sigmoid',
                                     pad_type=pad_type)
 
-
-
     def forward(self, references, g_in, similar_img):
         dims = references.shape
 
         references = references.reshape( dims[0] * dims[1], dims[2], dims[3], dims[4]  )
         e_vectors = self.embedder(references).reshape(dims[0] , dims[1], -1)
         e_hat = e_vectors.mean(dim = 1)
-
-
         feature = self.lmark_ani_encoder(g_in)
-
         # Decode
         adain_params = self.mlp(e_hat)
         assign_adain_params(adain_params, self.decoder)
@@ -392,11 +387,7 @@ class GlobalGenerator(nn.Module):
             return [self.decoder(feature)]
         I_feature = self.decoder(feature)
 
-        I_hat = self.rgb_conv(I_feature)
-        
-
-        
-        
+        I_hat = self.rgb_conv(I_feature)        
         ani_img = g_in[:,3:,:,:]
         similar_img = similar_img[:,:3]
         alpha = self.alpha_conv(I_feature)
@@ -404,7 +395,6 @@ class GlobalGenerator(nn.Module):
         face_foreground = (1 - alpha) * ani_img + alpha * I_hat
         if not self.deform:
             foreground_feature = self.foregroundNet( torch.cat([ani_img, similar_img], 1) )  
-
             # foreground_feature = self.foregroundNet( ani_img)  # should be torch.cat([ani_img, similar_img]) and change foreground to 6 channel input
         else:
             feature = torch.cat([ani_img, similar_img], 1)
@@ -415,27 +405,18 @@ class GlobalGenerator(nn.Module):
             fea = self.def_conv_1_norm(fea)
 
             offset_2 = self.off2d_2(fea)
-            print (offset_2.shape)
             #######################################
 
             fea = self.def_conv_2(ani_img, offset_2)
-
             fea = self.def_conv_2_norm(fea)
 
             offset_3 = self.off2d_3(fea)
-
-             
+            
             fea = self.def_conv_3(fea, offset_3)
             foreground_feature = self.def_conv3_norm(fea)
 
         forMask_feature = torch.cat([foreground_feature, I_feature ], 1)
-
-
         beta = self.beta(forMask_feature)
-
-
-
-
         similar_img[ani_img> -0.9] = -1 #  = similar_img * mask
 
         image = (1- beta) * similar_img + beta * face_foreground
