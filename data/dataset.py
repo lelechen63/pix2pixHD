@@ -144,8 +144,7 @@ class Lmark2rgbDataset(Dataset):
             target_lmark = plot_landmarks(target_lmark)
             target_lmark  = cv2.resize(target_lmark, self.output_shape)
             target_lmark = self.transform(target_lmark)
-
-            similar_frame = reference_frames[similar_id]
+            similar_frame = reference_frames[similar_id,:3]
 
 
             input_dic = {'v_id' : v_id, 'target_lmark': target_lmark, 'reference_frames': reference_frames,
@@ -243,13 +242,13 @@ class Lmark2rgbLSTMDataset(Dataset):
             reference_frames[kk] = torch.cat([rgb_t, lmark_rgb],0)  # (6, 256, 256)
 ############################################################################
 
-        similar_frames = torch.zeros(self.lstm_length, 6, self.output_shape[0], self.output_shape[0])
+        similar_frames = torch.zeros(self.lstm_length, 3, self.output_shape[0], self.output_shape[0])
         for kk in range(self.lstm_length):
             reference_rt_diff = reference_rts - rt[start_target_id + kk]
             reference_rt_diff = np.absolute(reference_rt_diff)
             r_diff = np.mean(reference_rt_diff, axis =1)
             similar_id  = np.argmin(r_diff) # input_indexs[np.argmin(r_diff)]
-            similar_frames[kk] = reference_frames[similar_id]
+            similar_frames[kk] = reference_frames[similar_id,:3]
 
 
 

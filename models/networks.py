@@ -390,8 +390,8 @@ class GlobalGenerator(nn.Module):
         I_hat = self.rgb_conv(I_feature)        
         ani_img = g_in[:,3:,:,:]
         ani_img.data = ani_img.data.contiguous()
-        similar_img = similar_img[:,:3]
-        similar_img.data = similar_img.data.contiguous()
+        # similar_img = similar_img[:,:3]
+        # similar_img.data = similar_img.data.contiguous()
         alpha = self.alpha_conv(I_feature)
 
         face_foreground = (1 - alpha) * ani_img + alpha * I_hat
@@ -418,12 +418,12 @@ class GlobalGenerator(nn.Module):
         forMask_feature = torch.cat([foreground_feature, I_feature ], 1)
         beta = self.beta(forMask_feature)
         background = similar_img.clone()
-        background[ani_img> -0.9] = -1 #  = similar_img * mask
+        background[ani_img> -0.9] = -1 
 
-        image = (1- beta) * similar_img + beta * face_foreground
+        image = (1- beta) * background + beta * face_foreground
         
 
-        return [image, similar_img, face_foreground, beta, alpha, I_hat]
+        return [image, background, face_foreground, beta, alpha, I_hat]
 
 
 class GlobalGenerator_lstm(nn.Module):
