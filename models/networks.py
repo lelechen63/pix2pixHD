@@ -352,10 +352,9 @@ class GlobalGenerator(nn.Module):
             self.foregroundNet = nn.Sequential(*model)
             
         else:
-
-            self.off2d_1 = nn.Sequential(*[ nn.ReflectionPad2d(3), nn.Conv2d(6, 18 * 8, kernel_size=7, stride =1, padding=0), nn.InstanceNorm2d(18 * 8), nn.ReLU(True)])
-
-            self.def_conv_1 = DeformConv(6, 64, 3,stride =1, padding =1, deformable_groups= 8)
+            self.conv_first =  nn.Sequential(*[nn.ReflectionPad2d(3), nn.Conv2d(6, 64, kernel_size=7, padding=0), norm_layer(64), nn.ReLU(True) ])
+            self.off2d_1 = nn.Sequential(*[  nn.Conv2d(64, 18 * 8, kernel_size=3, stride =1, padding=1), nn.InstanceNorm2d(18 * 8), nn.ReLU(True)])
+            self.def_conv_1 = DeformConv(64, 64, 3,stride =1, padding =1, deformable_groups= 8)
             self.def_conv_1_norm = nn.Sequential(*[  nn.InstanceNorm2d(64), nn.ReLU(True)])
 
             self.off2d_2 = nn.Sequential(*[  nn.Conv2d(64, 18 * 8, kernel_size=3, stride =1, padding=1), nn.InstanceNorm2d(18 * 8), nn.ReLU(True)])
@@ -400,9 +399,10 @@ class GlobalGenerator(nn.Module):
             # foreground_feature = self.foregroundNet( ani_img)  # should be torch.cat([ani_img, similar_img]) and change foreground to 6 channel input
         else:
             feature = torch.cat([ani_img, similar_img], 1)
-            offset_1 = self.off2d_1(feature)
+            fea = self.conv_first(feature)
+            offset_1 = self.off2d_1(fea)
 
-            fea = self.def_conv_1(feature, offset_1)
+            fea = self.def_conv_1(fea, offset_1)
             fea = self.def_conv_1_norm(fea)
 
             offset_2 = self.off2d_2(fea)
@@ -417,14 +417,15 @@ class GlobalGenerator(nn.Module):
 
         forMask_feature = torch.cat([foreground_feature, I_feature ], 1)
         beta = self.beta(forMask_feature)
+        with torch.no_grad():
+            background = similar_img.detach().clone()
+            mask = ani_img> -0.9
+            background[mask] = -1 
 
-        mask = ani_img> -0.9
-        similar_img[mask] = -1 
-
-        image = (1- beta) * similar_img + beta * face_foreground
+        image = (1- beta) * background + beta * face_foreground
         
 
-        return [image, similar_img, face_foreground, beta, alpha, I_hat]
+        return [image, background, face_foreground, beta, alpha, I_hat]
 
 
 class GlobalGenerator_lstm(nn.Module):
