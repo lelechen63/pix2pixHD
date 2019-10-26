@@ -405,7 +405,7 @@ class GlobalGenerator(nn.Module):
 
             offset_2 = self.off2d_2(fea)
 
-            fea = self.def_conv_2(ani_img.contiguous(), offset_2)
+            fea = self.def_conv_2(similar_img, offset_2)
             fea = self.def_conv_2_norm(fea)
 
             offset_3 = self.off2d_3(fea)
@@ -415,7 +415,8 @@ class GlobalGenerator(nn.Module):
 
         forMask_feature = torch.cat([foreground_feature, I_feature ], 1)
         beta = self.beta(forMask_feature)
-        similar_img[ani_img> -0.9] = -1 #  = similar_img * mask
+        background = similar_img.clone()
+        background[ani_img> -0.9] = -1 #  = similar_img * mask
 
         image = (1- beta) * similar_img + beta * face_foreground
         
