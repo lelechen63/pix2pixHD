@@ -59,11 +59,13 @@ with torch.autograd.set_detect_anomaly(False):
 
             ############## Forward Pass ######################
             if opt.no_ani:
-                losses, generated = model(references =Variable(data['reference_frames']),target_lmark= Variable(data['target_lmark']),target_ani=  None,
-                real_image=  Variable(data['target_rgb']), similar_frame = data['similar_frame'], infer=save_fake)
+                losses, generated = model(references =Variable(data['reference_frames']),target_lmark= Variable(data['target_lmark']), \
+                target_ani=  None, real_image=  Variable(data['target_rgb']), similar_frame =Variable( data['similar_frame']), \
+                cropped_similar_img = Variable(data['cropped_similar_image'] ), infer=save_fake)
             else:
-                losses, generated = model(references =Variable(data['reference_frames']),target_lmark= Variable(data['target_lmark']),target_ani= Variable(data['target_ani']),
-                real_image=  Variable(data['target_rgb']), similar_frame = data['similar_frame'], infer=save_fake)
+                losses, generated = model(references =Variable(data['reference_frames']),target_lmark= Variable(data['target_lmark']), \
+                target_ani= Variable(data['target_ani']),real_image=  Variable(data['target_rgb']), similar_frame = Variable(data['similar_frame']), \
+                cropped_similar_img = Variable(data['cropped_similar_image']) , infer=save_fake)
             # sum per device losses
             losses = [ torch.mean(x) if not isinstance(x, int) else x for x in losses ]
             loss_dict = dict(zip(model.module.loss_names, losses))

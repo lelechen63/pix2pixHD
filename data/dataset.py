@@ -42,7 +42,10 @@ class Lmark2rgbDataset(Dataset):
         self.root  = opt.dataroot
 
         if opt.isTrain:
-            _file = open(os.path.join(self.root, 'txt',  "train_front_rt2.pkl"), "rb")
+            if self.root == '/home/cxu-serve/p1/lchen63/voxceleb':
+                _file = open(os.path.join(self.root, 'txt', "front_rt2.pkl"), "rb")
+            else:
+                _file = open(os.path.join(self.root, 'txt',  "train_front_rt2.pkl"), "rb")
             # self.data = pkl.load(_file)
             self.data = pkl._Unpickler(_file)
             self.data.encoding = 'latin1'
@@ -59,7 +62,7 @@ class Lmark2rgbDataset(Dataset):
         
         self.transform = transforms.Compose([
             transforms.ToTensor(),
-            transforms.Normalize(mean=(0.5, 0.5, 0.5), std=(0.5, 0.5, 0.5), inplace=True)
+            transforms.Normalize(mean=(0.5, 0.5, 0.5), std=(0.5, 0.5, 0.5))
         ])
 
 
@@ -71,7 +74,7 @@ class Lmark2rgbDataset(Dataset):
         return 'Lmark2rgbDataset'
 
     def __getitem__(self, index):
-        try:
+        # try:
             v_id = self.data[index][0]
             reference_id = self.data[index][1]
 
@@ -145,14 +148,16 @@ class Lmark2rgbDataset(Dataset):
             target_lmark  = cv2.resize(target_lmark, self.output_shape)
             target_lmark = self.transform(target_lmark)
             similar_frame = reference_frames[similar_id,:3]
+            cropped_similar_image = similar_frame.clone()
+            cropped_similar_image[target_ani> -0.9] = -1 
 
 
-            input_dic = {'v_id' : v_id, 'target_lmark': target_lmark, 'reference_frames': reference_frames,
-            'target_rgb': target_rgb, 'target_ani': target_ani, 'reference_ids':str(input_indexs), 'target_id': target_id
-            , 'similar_frame': similar_frame}
+            input_dic = {'v_id' : v_id, 'target_lmark': target_lmark, 'reference_frames': reference_frames, \
+            'target_rgb': target_rgb, 'target_ani': target_ani, 'reference_ids':str(input_indexs), 'target_id': target_id \
+            , 'similar_frame': similar_frame, "cropped_similar_image" : cropped_similar_image}
             return input_dic
-        except:
-            return None
+        # except:
+        #     return None
 
 
 
@@ -243,12 +248,14 @@ class Lmark2rgbLSTMDataset(Dataset):
 ############################################################################
 
         similar_frames = torch.zeros(self.lstm_length, 3, self.output_shape[0], self.output_shape[0])
+        cropped_similar_image = torch.zeros(self.lstm_length, 3, self.output_shape[0], self.output_shape[0])
         for kk in range(self.lstm_length):
             reference_rt_diff = reference_rts - rt[start_target_id + kk]
             reference_rt_diff = np.absolute(reference_rt_diff)
             r_diff = np.mean(reference_rt_diff, axis =1)
             similar_id  = np.argmin(r_diff) # input_indexs[np.argmin(r_diff)]
-            similar_frames[kk] = reference_frames[similar_id,:3]
+            similar_frame = reference_frames[similar_id,:3]
+            similar_frames[kk] = similar_frame
 
 
 
@@ -266,12 +273,16 @@ class Lmark2rgbLSTMDataset(Dataset):
             target_ani = cv2.resize(target_ani, self.output_shape)
             target_ani = self.transform(target_ani)
             target_anis[kk] = target_ani
+            cropped_similar_img = similar_frame[target_ani > -0.9 ] = -1
+
+            cropped_similar_image[kk] = cropped_similar_img
+
        
         ############################################################################
 
         input_dic = {'v_id' : v_id, 'target_lmark': target_lmarks, 'reference_frames': reference_frames,
         'target_rgb': target_rgbs, 'target_ani': target_anis, 'reference_ids':str(input_indexs), 'target_id': start_target_id, 
-        'similar_frame': similar_frames}
+        'similar_frame': similar_frames, "cropped_similar_image" : cropped_similar_image}
         return input_dic
 
 
