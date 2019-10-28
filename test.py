@@ -39,13 +39,15 @@ for i, data in enumerate(dataset):
     
     if opt.no_ani:
         
-        generated = model.inference(Variable(data['reference_frames']), Variable(data['target_lmark']), None,  Variable(data['target_rgb']), similar_img)
+        generated = model.inference(Variable(data['reference_frames']), Variable(data['target_lmark']), None, \
+         Variable(data['target_rgb']), similar_img, Variable(data['cropped_similar_image']) )
     else:
-        generated = model.inference(Variable(data['reference_frames']), Variable(data['target_lmark']),  Variable(data['target_ani']),  Variable(data['target_rgb']), similar_img)
+        generated = model.inference(Variable(data['reference_frames']), Variable(data['target_lmark']), \
+          Variable(data['target_ani']),  Variable(data['target_rgb']), similar_img, Variable(data['cropped_similar_image'] ))
     visuals = OrderedDict([('reference1', util.tensor2im(data['reference_frames'][0, 0,:3])),
-                                    ('reference2', util.tensor2im(data['reference_frames'][0, 1,:3])),
-                                    ('reference3', util.tensor2im(data['reference_frames'][0, 2,:3])),
-                                    ('reference4', util.tensor2im(data['reference_frames'][0, 3,:3])),
+                                    # ('reference2', util.tensor2im(data['reference_frames'][0, 1,:3])),
+                                    # ('reference3', util.tensor2im(data['reference_frames'][0, 2,:3])),
+                                    # ('reference4', util.tensor2im(data['reference_frames'][0, 3,:3])),
                                    ('target_lmark', util.tensor2im(data['target_lmark'][0])),
                                    ('target_ani', util.tensor2im(data['target_ani'][0])),
                                    ('synthesized_image', util.tensor2im(generated[0].data[0])),

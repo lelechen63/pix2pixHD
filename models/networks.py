@@ -356,7 +356,7 @@ class GlobalGenerator(nn.Module):
 
             self.off2d_2 = nn.Sequential(*[  nn.Conv2d(64, 18 * 8, kernel_size=3, stride =1, padding=1), nn.InstanceNorm2d(18 * 8), nn.ReLU(False)])
 
-            self.def_conv_2 = DeformConv(3, 128, 3,stride =1, padding =1, deformable_groups= 8)
+            self.def_conv_2 = DeformConv(64, 128, 3,stride =1, padding =1, deformable_groups= 8)
             self.def_conv_2_norm =  nn.Sequential(*[  nn.InstanceNorm2d(128), nn.ReLU(False)])
 
             self.off2d_3 = nn.Sequential(*[  nn.Conv2d(128, 18 * 8, kernel_size=3, stride =1,padding=1), nn.InstanceNorm2d(18 * 8), nn.ReLU(False)])
@@ -369,7 +369,7 @@ class GlobalGenerator(nn.Module):
                                     activation='sigmoid',
                                     pad_type=pad_type)
 
-    def forward(self, references, g_in, similar_img):
+    def forward(self, references, g_in, similar_img, cropped_similar_img):
         dims = references.shape
 
         references = references.reshape( dims[0] * dims[1], dims[2], dims[3], dims[4]  )
@@ -389,14 +389,17 @@ class GlobalGenerator(nn.Module):
         ani_img = g_in[:,3:,:,:]
         ani_img.data = ani_img.data.contiguous()
         alpha = self.alpha_conv(I_feature)
-
         face_foreground = (1 - alpha) * ani_img + alpha * I_hat
         if not self.deform:
-            foreground_feature = self.foregroundNet( torch.cat([ani_img, similar_img], 1) )  
-            # foreground_feature = self.foregroundNet( ani_img)  # should be torch.cat([ani_img, similar_img]) and change foreground to 6 channel input
+            foreground_feature = self.foregroundNet( torch.cat([ani_img, similar_img], 1) ) 
+            forMask_feature = torch.cat([foreground_feature, I_feature ], 1)
+            beta = self.beta(forMask_feature)
+            # mask = ani_img> -0.9
+            # similar_img[mask] = -1 
+            image = (1- beta) * cropped_similar_img + beta * face_foreground 
         else:   
             # with bug, can not be solved yet !!!!!!!!!!!!!!!!!!!!
-            feature = torch.cat([ani_img, similar_img], 1)
+            feature = torch.cat([ani_img, cropped_similar_img], 1)
             fea = self.conv_first(feature)
             offset_1 = self.off2d_1(fea)
 
@@ -405,7 +408,7 @@ class GlobalGenerator(nn.Module):
 
             offset_2 = self.off2d_2(fea)
 
-            fea = self.def_conv_2(similar_img, offset_2)
+            fea = self.def_conv_2(fea, offset_2)
             fea = self.def_conv_2_norm(fea)
 
             offset_3 = self.off2d_3(fea)
@@ -413,15 +416,13 @@ class GlobalGenerator(nn.Module):
             fea = self.def_conv_3(fea, offset_3)
             foreground_feature = self.def_conv3_norm(fea)
 
-        forMask_feature = torch.cat([foreground_feature, I_feature ], 1)
-        beta = self.beta(forMask_feature)
+            forMask_feature = torch.cat([foreground_feature, I_feature ], 1)
+            beta = self.beta(forMask_feature)
 
-        similar_img[ani_img> -0.9] = -1 
-
-        image = (1- beta) * similar_img + beta * face_foreground
+            image = (1- beta) * cropped_similar_img + beta * face_foreground
         
 
-        return [image, similar_img, face_foreground, beta, alpha, I_hat]
+        return [image, cropped_similar_img, face_foreground, beta, alpha, I_hat]
 
 
 
