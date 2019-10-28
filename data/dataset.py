@@ -42,7 +42,10 @@ class Lmark2rgbDataset(Dataset):
         self.root  = opt.dataroot
 
         if opt.isTrain:
-            _file = open(os.path.join(self.root, 'txt',  "train_front_rt2.pkl"), "rb")
+            if self.root == '/home/cxu-serve/p1/lchen63/voxceleb':
+                _file = open(os.path.join(self.root, 'txt', "front_rt2.pkl"), "rb")
+            else:
+                _file = open(os.path.join(self.root, 'txt',  "train_front_rt2.pkl"), "rb")
             # self.data = pkl.load(_file)
             self.data = pkl._Unpickler(_file)
             self.data.encoding = 'latin1'
@@ -94,13 +97,26 @@ class Lmark2rgbDataset(Dataset):
             ani_video = mmcv.VideoReader(ani_video_path)
 
             # sample frames for embedding network
-            input_indexs  = set(random.sample(range(0,64), self.num_frames))
+            if self.opt.use_ft:
+                if self.num_frames  ==1 :
+                    input_indexs = [0]
+                    target_id = 0
+                    reference_id = 0
+                elif self.num_frames == 8:
+                    input_indexs = [0,7,15,23,31,39,47,55]
+                    target_id =  random.sample(input_indexs, 1)
 
-            # we randomly choose a target frame 
-            while True:
-                target_id =  np.random.choice( v_length - 1)
-                if target_id not in input_indexs:
-                    break
+                elif self.num_frames == 32:
+                    input_indexs = [1, 3, 5, 7, 9, 11, 13, 15, 17, 19, 21, 23, 25, 27, 29, 31, 33, 35, 37, 39, 41, 43, 45, 47, 49, 51, 53, 55, 57, 59, 61, 63]
+                    target_id =  random.sample(input_indexs, 1)
+            else:
+                input_indexs  = set(random.sample(range(0,64), self.num_frames))
+
+                # we randomly choose a target frame 
+                while True:
+                    target_id =  np.random.choice( v_length - 1)
+                    if target_id not in input_indexs:
+                        break
             reference_frames = []
             reference_rt_diffs = []
 

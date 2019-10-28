@@ -34,13 +34,14 @@ def get_norm_layer(norm_type='instance'):
         raise NotImplementedError('normalization layer [%s] is not found' % norm_type)
     return norm_layer
 
-def define_G(input_nc, output_nc, netG, pad_type,  norm='instance',ngf= 64, attention = True, lstm = False,deform = False, gpu_ids=[]):    
-    norm_layer = get_norm_layer(norm_type=norm)     
+def define_G(input_nc, output_nc, netG, pad_type,  norm='instance',ngf= 64, attention = True, lstm = False,deform = False, ft = False, gpu_ids=[]):    
+    norm_layer = get_norm_layer(norm_type=norm) 
+
     if netG == 'global':
         if lstm == False:    
-            netG = GlobalGenerator( input_nc, output_nc, pad_type, norm_layer,ngf,attention, deform)       
+            netG = GlobalGenerator( input_nc, output_nc, pad_type, norm_layer,ngf,attention, deform, ft)       
         else:
-            netG = GlobalGenerator_lstm( input_nc, output_nc, pad_type, norm_layer,ngf,attention,deform)
+            netG = GlobalGenerator_lstm( input_nc, output_nc, pad_type, norm_layer,ngf,attention,deform,ft)
     elif netG == 'local':        
         netG = LocalEnhancer(input_nc, output_nc, ngf, n_downsample_global, n_blocks_global, 
                                   n_local_enhancers, n_blocks_local, norm_layer)
@@ -231,10 +232,11 @@ def get_num_adain_params(model):
             num_adain_params += 2*m.num_features
     return num_adain_params
 class GlobalGenerator(nn.Module):
-    def __init__(self,input_nc, output_nc, pad_type='reflect', norm_layer=nn.BatchNorm2d, ngf = 64, attention = True, deform= False ):
+    def __init__(self,input_nc, output_nc, pad_type='reflect', norm_layer=nn.BatchNorm2d, ngf = 64, attention = True, deform= False, ft = False ):
         super(GlobalGenerator, self).__init__()        
         activ = 'relu'    
         self.deform = deform
+        self.ft = ft
         self.attention = attention
         model = [nn.ReflectionPad2d(3), nn.Conv2d(input_nc, ngf, kernel_size=7, padding=0), norm_layer(ngf), nn.ReLU(True) ]
         ### downsample
@@ -372,6 +374,8 @@ class GlobalGenerator(nn.Module):
 
         references = references.reshape( dims[0] * dims[1], dims[2], dims[3], dims[4]  )
         e_vectors = self.embedder(references).reshape(dims[0] , dims[1], -1)
+        if self.ft:
+            e_vectors = e_vectors.detach()
         e_hat = e_vectors.mean(dim = 1)
         feature = self.lmark_ani_encoder(g_in)
         # Decode
@@ -418,6 +422,7 @@ class GlobalGenerator(nn.Module):
         
 
         return [image, similar_img, face_foreground, beta, alpha, I_hat]
+
 
 
 class GlobalGenerator_lstm(nn.Module):

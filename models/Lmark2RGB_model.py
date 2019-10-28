@@ -33,16 +33,17 @@ class Lmark2RGBModel1(BaseModel):
         self.attention = not opt.no_att
         self.lstm = opt.use_lstm
         self.deform = opt.use_deform
-
+        self.ft = opt.use_ft
         # self.lstm = not opt.no_lstm
-        self.netG = networks.define_G(input_nc = input_nc, output_nc =opt.output_nc,netG = opt.netG, 
-            pad_type='reflect',norm = opt.norm, ngf = opt.ngf, attention = self.attention, lstm = self.lstm, deform = self.deform, gpu_ids=self.gpu_ids)          
+        self.netG = networks.define_G(input_nc = input_nc, output_nc =opt.output_nc,netG = opt.netG, \
+            pad_type='reflect',norm = opt.norm, ngf = opt.ngf, attention = self.attention, lstm = self.lstm,\
+             deform = self.deform, ft = self.ft,  gpu_ids=self.gpu_ids)          
 
         # Discriminator network
         if self.isTrain:
             use_sigmoid = opt.no_lsgan
             netD_input_nc = input_nc + opt.output_nc
-            self.netD = networks.define_D(netD_input_nc, opt.ndf, opt.n_layers_D, opt.norm, use_sigmoid, 
+            self.netD = networks.define_D(netD_input_nc, opt.ndf, opt.n_layers_D, opt.norm, use_sigmoid, \
                                           opt.num_D, not opt.no_ganFeat_loss, gpu_ids=self.gpu_ids)
 
         if self.opt.verbose:
@@ -101,8 +102,13 @@ class Lmark2RGBModel1(BaseModel):
             else:
                 params = list(self.netG.parameters())
                   
-            self.optimizer_G = torch.optim.Adam(params, lr=opt.lr, betas=(opt.beta1, 0.999))                            
-
+            # self.optimizer_G = torch.optim.Adam(params, lr=opt.lr, betas=(opt.beta1, 0.999))                            
+            if opt.use_ft:
+                for param in self.netG.embedder.parameters():
+                    param.requires_grad = False
+                self.optimizer_G = torch.optim.Adam(filter(lambda p: p.requires_grad, self.netG.parameters()),  lr=opt.lr, betas=(opt.beta1, 0.999))
+            else:
+                self.optimizer_G = torch.optim.Adam(params, lr=opt.lr, betas=(opt.beta1, 0.999))  
             # optimizer D                        
             params = list(self.netD.parameters())    
             self.optimizer_D = torch.optim.Adam(params, lr=opt.lr, betas=(opt.beta1, 0.999))
