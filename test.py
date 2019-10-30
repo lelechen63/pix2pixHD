@@ -54,6 +54,8 @@ for i, data in enumerate(dataset):
                                    ('real_image', util.tensor2im(data['target_rgb'][0]))])
     img_path = data['v_id']
     print('process image... %s' % img_path)
+
+    print (img_path)
     visualizer.save_images(webpage, visuals, img_path)
 
 

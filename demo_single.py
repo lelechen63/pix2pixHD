@@ -17,11 +17,13 @@ import face_alignment
 from scipy.spatial.transform import Rotation 
 from util import utils
 import time
-from numpy import *
+# from numpy import *
 from scipy.spatial.transform import Rotation as R
 res = 224
 import soft_renderer as sr
-
+import util.util as util
+from util.visualizer import Visualizer
+from util import html
 detector = dlib.get_frontal_face_detector()
 predictor = dlib.shape_predictor('./basics/shape_predictor_68_face_landmarks.dat')
 
@@ -170,12 +172,12 @@ def rigid_transform_3D(A, B):
 
     N = A.shape[0]; # total points
 
-    centroid_A = mean(A, axis=0)
-    centroid_B = mean(B, axis=0)
+    centroid_A = np.mean(A, axis=0)
+    centroid_B = np.mean(B, axis=0)
     
     # centre the points
-    AA = A - tile(centroid_A, (N, 1))
-    BB = B - tile(centroid_B, (N, 1))
+    AA = A - np.tile(centroid_A, (N, 1))
+    BB = B - np.tile(centroid_B, (N, 1))
 
     # dot is matrix multiplication for array
     H = transpose(AA) * BB
@@ -229,7 +231,7 @@ def compute_RT(video_path):
         source_lmark  = np.mat(t_lmark[j])
 
         A2 = ret_R*source_lmark.T
-        A2+= tile(ret_t, (1, 68))
+        A2+= np.tile(ret_t, (1, 68))
         A2 = A2.T
         nomalized[j] = A2
         r = Rotation.from_dcm(ret_R)
@@ -275,7 +277,7 @@ def compute_RT_single(img_path):
         source_lmark  = np.mat(t_lmark[j])
 
         A2 = ret_R*source_lmark.T
-        A2+= tile(ret_t, (1, 68))
+        A2+= np.tile(ret_t, (1, 68))
         A2 = A2.T
         nomalized[j] = A2
         r = Rotation.from_dcm(ret_R)
@@ -376,12 +378,15 @@ def get_animation(key_id, video_path ):
    
 
 #create demo data
-def demo_data(video_path, reference_id):
+def demo_data(opt, video_path, reference_id):
+
     output_shape   = tuple([opt.loadSize, opt.loadSize])
+    num_frames = opt.num_frames
     transform = transforms.Compose([
         transforms.ToTensor(),
         transforms.Normalize(mean=(0.5, 0.5, 0.5), std=(0.5, 0.5, 0.5), inplace=True)])
-    num_frames = opt.num_frames
+    # v_id = video_path[:-4].split('/')
+    v_id = video_path[:-4]
     ani_video_path =video_path[:-4] + '_ani.mp4'
     rt_path = video_path[:-4] + '_sRT.npy'
     lmark_path = video_path[:-4] + '.npy'
@@ -392,81 +397,96 @@ def demo_data(video_path, reference_id):
     ani_video = mmcv.VideoReader(ani_video_path)
     # sample frames for embedding network
     
-    if self.opt.use_ft:
-        if self.num_frames  ==1 :
+    if opt.use_ft:
+        if num_frames  ==1 :
             input_indexs = [0]
             target_id = 0
             reference_id = 0
-        elif self.num_frames == 8:
+        elif num_frames == 8:
             input_indexs = [0,7,15,23,31,39,47,55]
-            target_id =  random.sample(input_indexs, 1)
 
-        elif self.num_frames == 32:
+        elif num_frames == 32:
             input_indexs = [1, 3, 5, 7, 9, 11, 13, 15, 17, 19, 21, 23, 25, 27, 29, 31, 33, 35, 37, 39, 41, 43, 45, 47, 49, 51, 53, 55, 57, 59, 61, 63]
-            target_id =  random.sample(input_indexs, 1)
     else:
-        input_indexs  = set(random.sample(range(0,64), self.num_frames))
+        print (num_frames)
+        input_indexs = random.sample(range(0,64), num_frames)
+        input_indexs  = set(input_indexs)
 
         # we randomly choose a target frame 
-        while True:
-            target_id =  np.random.choice( v_length - 1)
-            if target_id not in input_indexs:
-                break
-    reference_frames = []
-    reference_rt_diffs = []
-
-    target_rt = rt[target_id]
-    for t in input_indexs:
-
-        reference_rt_diffs.append( rt[t] - target_rt )
+        # while True:
+        #     target_id =  np.random.choice( v_length - 1)
+        #     if target_id not in input_indexs:
+        #         break
+    reference_rts = np.zeros((num_frames, 3))
+    # we randomly choose a target frame 
+    target_ids = []
+    for gg in range(v_length):
+        target_ids.append(gg)
+    reference_frames = torch.zeros(num_frames, 6 ,output_shape[0],output_shape[1])
+    for kk, t in enumerate(input_indexs):
         rgb_t =  mmcv.bgr2rgb(real_video[t]) 
         lmark_t = lmark[t]
         lmark_rgb = plot_landmarks( lmark_t)
         # lmark_rgb = np.array(lmark_rgb) 
         # resize 224 to 256
-        rgb_t  = cv2.resize(rgb_t, self.output_shape)
-        lmark_rgb  = cv2.resize(lmark_rgb, self.output_shape)
+        rgb_t  = cv2.resize(rgb_t, output_shape)
+        lmark_rgb  = cv2.resize(lmark_rgb, output_shape)
         
         # to tensor
-        rgb_t = self.transform(rgb_t)
-        lmark_rgb = self.transform(lmark_rgb)
-        reference_frames.append(torch.cat([rgb_t, lmark_rgb],0))  # (6, 256, 256)   
-    reference_rt_diffs = np.absolute(reference_rt_diffs)
-    reference_rt_diffs = np.mean(reference_rt_diffs, axis =1)
-    # similar_id  = input_indexs[np.argmin(r_diff)]
-    similar_id  = np.argmin(reference_rt_diffs)
-    reference_frames = torch.stack(reference_frames)
-    
+        rgb_t = transform(rgb_t)
+        lmark_rgb = transform(lmark_rgb)
+        reference_frames[kk] = torch.cat([rgb_t, lmark_rgb],0) # (6, 256, 256)   
+
+        reference_rts[kk] = rt[t]
+
+    input_dics = []
+    similar_frame = torch.zeros( 3, output_shape[0], output_shape[0])    
+    reference_frames = torch.unsqueeze( reference_frames, 0)  
     ############################################################################
-    target_rgb = real_video[target_id]
-    reference_rgb = real_video[reference_id]
-    reference_ani = ani_video[reference_id]
-    target_ani = ani_video[target_id]
-    target_lmark = lmark[target_id]
+    for target_id in target_ids:
+        reference_rt_diff = reference_rts - rt[target_id]
+        reference_rt_diff = np.absolute(reference_rt_diff)
+        r_diff = np.mean(reference_rt_diff, axis =1)
+        similar_id  = np.argmin(r_diff) 
+        similar_frame = reference_frames[0,similar_id,:3]
 
-    target_rgb = mmcv.bgr2rgb(target_rgb)
-    target_rgb = cv2.resize(target_rgb, self.output_shape)
-    target_rgb = self.transform(target_rgb)
+        target_rgb = real_video[target_id]
+        reference_rgb = real_video[reference_id]
+        reference_ani = ani_video[reference_id]
+        target_ani = ani_video[target_id]
+        target_lmark = lmark[target_id]
 
-    target_ani = mmcv.bgr2rgb(target_ani)
-    target_ani = cv2.resize(target_ani, self.output_shape)
-    target_ani = self.transform(target_ani)
+        target_rgb = mmcv.bgr2rgb(target_rgb)
+        target_rgb = cv2.resize(target_rgb, output_shape)
+        target_rgb = transform(target_rgb)
 
-    target_lmark = plot_landmarks(target_lmark)
-    target_lmark  = cv2.resize(target_lmark, self.output_shape)
-    target_lmark = self.transform(target_lmark)
-    similar_frame = reference_frames[similar_id,:3]
-    cropped_similar_image = similar_frame.clone()
-    cropped_similar_image[target_ani> -0.9] = -1 
+        target_ani = mmcv.bgr2rgb(target_ani)
+        target_ani = cv2.resize(target_ani, output_shape)
+        target_ani = transform(target_ani)
+
+        target_lmark = plot_landmarks(target_lmark)
+        # target_lmark = np.array(target_lmark) 
+        target_lmark  = cv2.resize(target_lmark, output_shape)
+        target_lmark = transform(target_lmark)
+        cropped_similar_image = similar_frame.clone()
+        cropped_similar_image[target_ani> -0.9] = -1 
 
 
-    input_dic = {'v_id' : v_id, 'target_lmark': target_lmark, 'reference_frames': reference_frames, \
-    'target_rgb': target_rgb, 'target_ani': target_ani, 'reference_ids':str(input_indexs), 'target_id': target_id \
-    , 'similar_frame': similar_frame, "cropped_similar_image" : cropped_similar_image}
-    return input_dic
+        target_lmark = torch.unsqueeze( target_lmark, 0)  
+        target_rgb= torch.unsqueeze(target_rgb , 0) 
+        target_ani= torch.unsqueeze(target_ani , 0) 
+        similar_frame = torch.unsqueeze(similar_frame , 0) 
+        cropped_similar_image = torch.unsqueeze(cropped_similar_image , 0) 
+
+
+        input_dic = {'v_id' : v_id, 'target_lmark': target_lmark, 'reference_frames': reference_frames, \
+        'target_rgb': target_rgb, 'target_ani': target_ani, 'reference_ids':str(input_indexs), 'target_id': target_id \
+        , 'similar_frame': similar_frame, "cropped_similar_image" : cropped_similar_image}
+        input_dics.append(input_dic)
+    return input_dics
 
 # root = '/home/cxu-serve/p1/lchen63/voxceleb'
-root = '/data2/lchen63/voxceleb'
+# root = '/data2/lchen63/voxceleb'
 
 # v_id = 'test_video/id00061/cAT9aR8oFx0/00141'
 # reference_id = 542
@@ -479,42 +499,81 @@ if not os.path.exists( os.path.join('./demo', opt.name)  ):
 
 #change frame rate to 25FPS
 command = 'ffmpeg -i ' +  opt.v_path +   ' -r 25 -y  ' + opt.v_path[:-4] + '_fps25.mp4'
-# os.system(command)
+os.system(command)
+##################################################
+# if opt.v_path == '/home/cxu-serve/p1/lchen63/voxceleb/unzip/demo_video/lele.MOV':
 opt.v_path =  opt.v_path[:-4] + '_fps25.mp4'
-# _crop_video(opt.v_path)
+_crop_video(opt.v_path)
+########################################
 opt.v_path = opt.v_path[:-4] + '_crop.mp4'
-# _video2img2lmark(opt.v_path)
-# compute_RT(opt.v_path)
+    # key_id = 743
+_video2img2lmark(opt.v_path)
+compute_RT(opt.v_path)
 ## then you need to use PRnet to generate 3d  
 ## exaple: go to PRnet folder, python get_3d.py --v_path /home/cxu-serve/p1/lchen63/voxceleb/unzip/demo_video/lele_fps25_crop.mp4 --target_id 743
 # key_id, video_path  = compose_front(opt.v_path)
 # get_animation(key_id, video_path )
-key_id = 743
-
+else:
+    key_id = 28
+dataset = demo_data(opt, opt.v_path, key_id)
+print (len(dataset))
 model = create_model(opt)
-if opt.verbose:
-    print(model)
-    dataset = demo_data(opt.v_path, key_id)
-    if not os.path.exists( os.path.join('./demo', opt.name, v_id.split('/')[-2] + '_' + v_id.split('/')[-1])  ):
-        os.mkdir(os.path.join('./demo', opt.name, v_id.split('/')[-2]+ '_' +  v_id.split('/')[-1]))
-    save_path = os.path.join('./demo', opt.name,v_id.split('/')[-2]+ '_' +  v_id.split('/')[-1])
-
-    for i, data in enumerate(dataset):
-        # if i >= opt.how_many:
-        #     break
-        minibatch = 1 
-        if opt.no_ani:
-            generated = model.inference(Variable(data['reference_frames']), Variable(data['target_lmark']), \
-           None,  Variable(data['target_rgb']), Variable('similar_frame'), Variable(data['cropped_similar_image'] ))
-        else:
-            generated = model.inference(Variable(data['reference_frames']), Variable(data['target_lmark']), \
-          Variable(data['target_ani']),  Variable(data['target_rgb']), Variable('similar_frame'), Variable(data['cropped_similar_image'] ))
-        
-        img = torch.cat([generated[0].data.cpu(), data['target_rgb']], 0)
-        torchvision.utils.save_image(img, 
-                    "{}/{:05d}.png".format(save_path,i),normalize=True)
+print(model)
 
 
+visualizer = Visualizer(opt)
+# create website
+web_dir = os.path.join(opt.results_dir, opt.name, '%s_%s' % (opt.phase, opt.which_epoch))
+webpage = html.HTML(web_dir, 'Experiment = %s, Phase = %s, Epoch = %s' % (opt.name, opt.phase, opt.which_epoch))
 
-# losses, generated = model(references =Variable(data['reference_frames']),target_lmark= Variable(data['target_lmark']),target_ani=   Variable(data['target_ani']),real_image=  Variable(data['target_rgb']), similar_frame = Variable(data['similar_frame']), infer=save_fake)
+for i, data in enumerate(dataset):
+    v_id = data['v_id'].split('/')[-1]
+    if not os.path.exists( os.path.join('./demo', opt.name, v_id ) ):
+        os.mkdir(os.path.join('./demo', opt.name, v_id))
+    save_path = os.path.join('./demo', opt.name,v_id)
+    minibatch = 1 
+    if opt.no_ani:
+        generated = model.inference(Variable(data['reference_frames']), Variable(data['target_lmark']), \
+        None,  Variable(data['target_rgb']), Variable(data['similar_frame']), Variable(data['cropped_similar_image'] ))
+    else:
+        generated = model.inference(Variable(data['reference_frames']), Variable(data['target_lmark']), \
+        Variable(data['target_ani']),  Variable(data['target_rgb']), Variable(data['similar_frame']), Variable(data['cropped_similar_image'] ))
+    
+    img = torch.cat([generated[0].data.cpu(), data['target_rgb']], 0)
+    torchvision.utils.save_image(img, 
+                "{}/{:05d}.png".format(save_path,i),normalize=True)
+    if opt.num_frames >= 4:
+        visuals = OrderedDict([('reference1', util.tensor2im(data['reference_frames'][0, 0,:3])),
+                                ('reference2', util.tensor2im(data['reference_frames'][0, 1,:3])),
+                                ('reference3', util.tensor2im(data['reference_frames'][0, 2,:3])),
+                                ('reference4', util.tensor2im(data['reference_frames'][0, 3,:3])),
+                            ('target_lmark', util.tensor2im(data['target_lmark'][0])),
+                            ('target_ani', util.tensor2im(data['target_ani'][0])),
+                            ('synthesized_image', util.tensor2im(generated[0].data[0])),
+                            ('masked_similar_img', util.tensor2im(generated[1].data[0])),
+                            ('face_foreground', util.tensor2im(generated[2].data[0])),
+                            ('beta', util.tensor2im(generated[3].data[0])),
+                            ('alpha', util.tensor2im(generated[4].data[0])),
+                            ('I_hat', util.tensor2im(generated[5].data[0])),
+                            ('real_image', util.tensor2im(data['target_rgb'][0]))])
+    else:
+        visuals = OrderedDict([('reference1', util.tensor2im(data['reference_frames'][0, 0,:3])),
+                            ('target_lmark', util.tensor2im(data['target_lmark'][0])),
+                            ('target_ani', util.tensor2im(data['target_ani'][0])),
+                            ('synthesized_image', util.tensor2im(generated[0].data[0])),
+                            ('masked_similar_img', util.tensor2im(generated[1].data[0])),
+                            ('face_foreground', util.tensor2im(generated[2].data[0])),
+                            ('beta', util.tensor2im(generated[3].data[0])),
+                            ('alpha', util.tensor2im(generated[4].data[0])),
+                            ('I_hat', util.tensor2im(generated[5].data[0])),
+                            ('real_image', util.tensor2im(data['target_rgb'][0]))])
+    img_path = data['v_id']+ '/%05d'%i 
+    print('process image... %s' % img_path)
+    visualizer.save_images(webpage, visuals, img_path)
+    if i == 10:
+        break
+webpage.save()
+
+
+
  
