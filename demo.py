@@ -48,7 +48,8 @@ def demo_data(root, v_id, reference_id):
     if num_frames  ==1 :
         input_indexs = [0]
     elif num_frames == 8:
-        input_indexs = [0,7,15,23,31,39,47,55]
+        # input_indexs = [0,7,15,23,31,39,47,55]
+        input_indexs = [0, 80, 200,300,400,500,550,660]
     elif num_frames == 32:
         input_indexs = [1, 3, 5, 7, 9, 11, 13, 15, 17, 19, 21, 23, 25, 27, 29, 31, 33, 35, 37, 39, 41, 43, 45, 47, 49, 51, 53, 55, 57, 59, 61, 63]
     reference_rts = np.zeros((num_frames, 3))

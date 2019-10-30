@@ -312,13 +312,11 @@ def compose_front(v_path):
 
 
 
-def get_animation(key_id, video_path ):
+def get_animation( reference_img = None, key_id, video_path , obj_path, rt_path, lmark_path, reference_prnet_lmark_path ):
+
     reference_img_path = video_path[:-4] + '_%05d.png'%key_id
-
     reference_prnet_lmark_path = video_path[:-4] +'_prnet.npy'
-
     original_obj_path = video_path[:-4] + '_original.obj'
-
     rt_path  = video_path[:-4] + '_sRT.npy'
     lmark_path  = video_path[:-4] +'_front.npy'
 
@@ -338,8 +336,6 @@ def get_animation(key_id, video_path ):
     lmk3d_origin = np.load(reference_prnet_lmark_path)
     # lmk3d_origin[:,1] = res - lmk3d_origin[:,1]
     
-    
-
     # load RTs
     rots, trans = recover(np.load(rt_path))
 
@@ -497,18 +493,30 @@ if not os.path.exists('./demo' ):
 if not os.path.exists( os.path.join('./demo', opt.name)  ):
     os.mkdir(os.path.join('./demo', opt.name))
 
+
+target_img_path = '/home/cxu-serve/p1/lchen63/voxceleb/unzip/demo_video/id00017/01dfn2spqyE/lisa.jpg'
+
+cropped_img, _ = crop_image(target_img_path)
+cv2.imwrite(target_img_path[:-4] +'_crop.jpg', cropped_img)
+############# then you need to use PRnet to generate 3d  
+## exaple: go to PRnet folder, python get_3d.py --img_path
+
+# prnet_lmark = fa.get_landmarks(cropped_img)
+
+
+
 #change frame rate to 25FPS
-command = 'ffmpeg -i ' +  opt.v_path +   ' -r 25 -y  ' + opt.v_path[:-4] + '_fps25.mp4'
-os.system(command)
+# command = 'ffmpeg -i ' +  opt.v_path +   ' -r 25 -y  ' + opt.v_path[:-4] + '_fps25.mp4'
+# os.system(command)
 ##################################################
 # if opt.v_path == '/home/cxu-serve/p1/lchen63/voxceleb/unzip/demo_video/lele.MOV':
-opt.v_path =  opt.v_path[:-4] + '_fps25.mp4'
-_crop_video(opt.v_path)
+# opt.v_path =  opt.v_path[:-4] + '_fps25.mp4'
+# _crop_video(opt.v_path)
 ########################################
-opt.v_path = opt.v_path[:-4] + '_crop.mp4'
+# opt.v_path = opt.v_path[:-4] + '_crop.mp4'
     # key_id = 743
-_video2img2lmark(opt.v_path)
-compute_RT(opt.v_path)
+# _video2img2lmark(opt.v_path)
+# compute_RT(opt.v_path)
 ## then you need to use PRnet to generate 3d  
 ## exaple: go to PRnet folder, python get_3d.py --v_path /home/cxu-serve/p1/lchen63/voxceleb/unzip/demo_video/lele_fps25_crop.mp4 --target_id 743
 # key_id, video_path  = compose_front(opt.v_path)
