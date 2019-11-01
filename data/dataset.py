@@ -105,10 +105,13 @@ class Lmark2rgbDataset(Dataset):
                 elif self.num_frames == 8:
                     input_indexs = [0,7,15,23,31,39,47,55]
                     target_id =  random.sample(input_indexs, 1)
+                    input_indexs = set(input_indexs ) - set(target_id)
 
                 elif self.num_frames == 32:
                     input_indexs = [1, 3, 5, 7, 9, 11, 13, 15, 17, 19, 21, 23, 25, 27, 29, 31, 33, 35, 37, 39, 41, 43, 45, 47, 49, 51, 53, 55, 57, 59, 61, 63]
                     target_id =  random.sample(input_indexs, 1)
+                    input_indexs = set(input_indexs ) - set(target_id)
+                    
             else:
                 input_indexs  = set(random.sample(range(0,64), self.num_frames))
 
