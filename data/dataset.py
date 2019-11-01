@@ -113,6 +113,7 @@ class Lmark2rgbDataset(Dataset):
                     target_id =  random.sample(input_indexs, 1)
                     input_indexs = set(input_indexs ) - set(target_id)
                     input_indexs =list(input_indexs) 
+
                     
             else:
                 input_indexs  = set(random.sample(range(0,64), self.num_frames))
@@ -124,6 +125,8 @@ class Lmark2rgbDataset(Dataset):
                         break
             reference_frames = []
             reference_rt_diffs = []
+            if type(target_id) == list:
+                target_id = target_id[0] 
 
             target_rt = rt[target_id]
             for t in input_indexs:
