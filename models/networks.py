@@ -34,14 +34,14 @@ def get_norm_layer(norm_type='instance'):
         raise NotImplementedError('normalization layer [%s] is not found' % norm_type)
     return norm_layer
 
-def define_G(input_nc, output_nc, netG, pad_type,  norm='instance',ngf= 64, attention = True, lstm = False,deform = False, ft = False, gpu_ids=[]):    
+def define_G(input_nc, output_nc, netG, pad_type,  norm='instance',ngf= 64, opt = None, gpu_ids=[]):    
     norm_layer = get_norm_layer(norm_type=norm) 
 
     if netG == 'global':
-        if lstm == False:    
-            netG = GlobalGenerator( input_nc, output_nc, pad_type, norm_layer,ngf,attention, deform, ft)       
+        if opt.use_lstm == False:    
+            netG = GlobalGenerator( input_nc, output_nc, pad_type, norm_layer,ngf, opt)       
         else:
-            netG = GlobalGenerator_lstm( input_nc, output_nc, pad_type, norm_layer,ngf,attention,deform,ft)
+            netG = GlobalGenerator_lstm( input_nc, output_nc, pad_type, norm_layer , opt)
     elif netG == 'local':        
         netG = LocalEnhancer(input_nc, output_nc, ngf, n_downsample_global, n_blocks_global, 
                                   n_local_enhancers, n_blocks_local, norm_layer)
@@ -232,12 +232,13 @@ def get_num_adain_params(model):
             num_adain_params += 2*m.num_features
     return num_adain_params
 class GlobalGenerator(nn.Module):
-    def __init__(self,input_nc, output_nc, pad_type='reflect', norm_layer=nn.BatchNorm2d, ngf = 64, attention = True, deform= False, ft = False ):
+    def __init__(self,input_nc, output_nc, pad_type='reflect', norm_layer=nn.BatchNorm2d, ngf = 64, opt = None):
         super(GlobalGenerator, self).__init__()        
         activ = 'relu'    
-        self.deform = deform
-        self.ft = ft
-        self.attention = attention
+        self.deform = opt.use_deform
+        self.ft = opt.use_ft
+        self.attention =  not opt.no_att
+        self.ft_freeze = opt.ft_freeze
         model = [nn.ReflectionPad2d(3), nn.Conv2d(input_nc, ngf, kernel_size=7, padding=0), norm_layer(ngf), nn.ReLU(True) ]
         ### downsample
         model += [Conv2dBlock(64, 128, 4, 2, 1,           # 128, 128, 128 
