@@ -374,8 +374,9 @@ class GlobalGenerator(nn.Module):
 
         references = references.reshape( dims[0] * dims[1], dims[2], dims[3], dims[4]  )
         e_vectors = self.embedder(references).reshape(dims[0] , dims[1], -1)
-        # if self.ft:
-        #     e_vectors = e_vectors.detach()
+        if self.ft :
+            if self.ft_freeze:
+                e_vectors = e_vectors.detach()
         e_hat = e_vectors.mean(dim = 1)
         feature = self.lmark_ani_encoder(g_in)
         # Decode
