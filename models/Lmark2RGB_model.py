@@ -103,12 +103,12 @@ class Lmark2RGBModel1(BaseModel):
                 params = list(self.netG.parameters())
                   
             # self.optimizer_G = torch.optim.Adam(params, lr=opt.lr, betas=(opt.beta1, 0.999))                            
-            if opt.use_ft:
-                for param in self.netG.embedder.parameters():
-                    param.requires_grad = False
-                self.optimizer_G = torch.optim.Adam(filter(lambda p: p.requires_grad, self.netG.parameters()),  lr=opt.lr, betas=(opt.beta1, 0.999))
-            else:
-                self.optimizer_G = torch.optim.Adam(params, lr=opt.lr, betas=(opt.beta1, 0.999))  
+            # if opt.use_ft:
+            #     for param in self.netG.embedder.parameters():
+            #         param.requires_grad = False
+            #     self.optimizer_G = torch.optim.Adam(filter(lambda p: p.requires_grad, self.netG.parameters()),  lr=opt.lr, betas=(opt.beta1, 0.999))
+            # else:
+            self.optimizer_G = torch.optim.Adam(params, lr=opt.lr, betas=(opt.beta1, 0.999))  
             # optimizer D                        
             params = list(self.netD.parameters())    
             self.optimizer_D = torch.optim.Adam(params, lr=opt.lr, betas=(opt.beta1, 0.999))
