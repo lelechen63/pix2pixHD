@@ -42,10 +42,11 @@ class Lmark2rgbDataset(Dataset):
         self.root  = opt.dataroot
 
         if opt.isTrain:
-            if self.root == '/home/cxu-serve/p1/lchen63/voxceleb':
+            if self.root == '/home/cxu-serve/p1/lchen63/voxceleb' or opt.use_ft:
                 _file = open(os.path.join(self.root, 'txt', "front_rt2.pkl"), "rb")
             else:
                 _file = open(os.path.join(self.root, 'txt',  "train_front_rt2.pkl"), "rb")
+
             # self.data = pkl.load(_file)
             self.data = pkl._Unpickler(_file)
             self.data.encoding = 'latin1'
@@ -112,12 +113,9 @@ class Lmark2rgbDataset(Dataset):
                     input_indexs = [1, 3, 5, 7, 9, 11, 13, 15, 17, 19, 21, 23, 25, 27, 29, 31, 33, 35, 37, 39, 41, 43, 45, 47, 49, 51, 53, 55, 57, 59, 61, 63]
                     target_id =  random.sample(input_indexs, 1)
                     input_indexs = set(input_indexs ) - set(target_id)
-                    input_indexs =list(input_indexs) 
-
-                    
+                    input_indexs =list(input_indexs)                    
             else:
                 input_indexs  = set(random.sample(range(0,64), self.num_frames))
-
                 # we randomly choose a target frame 
                 while True:
                     target_id =  np.random.choice( v_length - 1)
