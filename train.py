@@ -105,7 +105,7 @@ with torch.autograd.set_detect_anomaly(False):
                 info = [str(data['v_id']).split(',')[0], str(data['reference_ids']).split('}')[0], str(data['target_id'] ).split(',')[0]]
                 info = '-'.join(info).replace('/','-')
                 if opt.num_frames >= 4:
-                    visuals = OrderedDict([(info + 'reference1', util.tensor2im(data['reference_frames'][0, 0,:3])),
+                    visuals = OrderedDict([( 'reference1', util.tensor2im(data['reference_frames'][0, 0,:3])),
                                             ('reference2', util.tensor2im(data['reference_frames'][0, 1,:3])),
                                             ('reference3', util.tensor2im(data['reference_frames'][0, 2,:3])),
                                             ('reference4', util.tensor2im(data['reference_frames'][0, 3,:3])),
@@ -119,7 +119,7 @@ with torch.autograd.set_detect_anomaly(False):
                                         ('I_hat', util.tensor2im(generated[5].data[0])),
                                         ('real_image', util.tensor2im(data['target_rgb'][0]))])
                 else:
-                    visuals = OrderedDict([(info + 'reference1', util.tensor2im(data['reference_frames'][0, 0,:3])),
+                    visuals = OrderedDict([( 'reference1', util.tensor2im(data['reference_frames'][0, 0,:3])),
                                         ('target_lmark', util.tensor2im(data['target_lmark'][0])),
                                         ('target_ani', util.tensor2im(data['target_ani'][0])),
                                         ('synthesized_image', util.tensor2im(generated[0].data[0])),
