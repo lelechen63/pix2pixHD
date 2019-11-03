@@ -23,6 +23,7 @@ class Lmark2RGBModel1(BaseModel):
     def initialize(self, opt):
         BaseModel.initialize(self, opt)
         self.isTrain = opt.isTrain
+        self.use_lstm = opt.use_lstm
         if opt.no_ani:
             input_nc = 3 
         else:
@@ -42,8 +43,7 @@ class Lmark2RGBModel1(BaseModel):
             use_sigmoid = opt.no_lsgan
             netD_input_nc = input_nc + opt.output_nc
             self.netD = networks.define_D(netD_input_nc, opt.ndf, opt.n_layers_D, opt.norm, use_sigmoid, \
-                                          opt.num_D, not opt.no_ganFeat_loss, gpu_ids=self.gpu_ids)
-
+                                          opt.num_D, not opt.no_ganFeat_loss, opt=opt, gpu_ids=self.gpu_ids)
         if self.opt.verbose:
                 print('---------- Networks initialized -------------')
 
@@ -113,7 +113,7 @@ class Lmark2RGBModel1(BaseModel):
 
     def encode_input(self, references = None, target_lmark = None, target_ani = None, real_image = None,similar_frame= None, \
         cropped_similar_img = None, infer=False):             
-        
+
         # real images for training
         if real_image is not None:
             real_image = Variable(real_image.data.cuda(non_blocking=True))
@@ -127,7 +127,10 @@ class Lmark2RGBModel1(BaseModel):
             target_lmark = Variable(target_lmark.data.cuda(non_blocking=True))
         if target_ani is not None:
             target_ani = Variable(target_ani.data.cuda(non_blocking=True))
-            g_in = torch.cat([target_lmark, target_ani], 1)
+            if self.use_lstm:
+                g_in = torch.cat([target_lmark, target_ani], 2)
+            else:
+                g_in = torch.cat([target_lmark, target_ani], 1)
         else:
             g_in = target_lmark
         return references, target_lmark, target_ani, real_image, g_in, similar_frame, cropped_similar_img
@@ -136,8 +139,34 @@ class Lmark2RGBModel1(BaseModel):
         input_concat = torch.cat(( g_in, test_image.detach()), dim=1)
         if use_pool:            
             fake_query = self.fake_pool.query(input_concat)
+            # if self.use_lstm:
+            #     d_tmp = self.netD.forward(fake_query)
+            #     d_new =[]
+            #     for dd in d_tmp:
+            #         dd_new = []
+            #         for d in dd:
+            #             d_dims = d.shape
+            #             d = d.reshape( self.opt.batchSize , self.opt.lstm_length,  d_dims[1], d_dims[2], d_dims[3]  )
+            #             d = d.mean(dim = 1)
+            #             dd_new.append(d)
+            #         d_new.append(dd_new)
+            #     return d_new
+            # else:
             return self.netD.forward(fake_query)
         else:
+            # if self.use_lstm:
+            #     d_tmp = self.netD.forward(input_concat)
+            #     d_new =[]
+            #     for dd in d_tmp:
+            #         dd_new = []
+            #         for d in dd:
+            #             d_dims = d.shape
+            #             d = d.reshape( self.opt.batchSize , self.opt.lstm_length,  d_dims[1], d_dims[2], d_dims[3]  )
+            #             d = d.mean(dim = 1)
+            #             dd_new.append(d)
+            #         d_new.append(dd_new)
+            #     return d_new
+            # else:
             return self.netD.forward(input_concat)
 
     def forward(self, references, target_lmark, target_ani, real_image, similar_frame,cropped_similar_img, infer=False):
@@ -152,6 +181,17 @@ class Lmark2RGBModel1(BaseModel):
         # if self.attention:
         fake_image = fake_list[0]
         # Fake Detection and Loss
+
+        ##### if it is using lstm, currently, my discriminator does not support lstm operation, we reshape to bactch size
+        g_dims = g_in.shape
+        img_dims = fake_image.shape
+
+        if self.use_lstm:
+            g_in = g_in.reshape(g_dims[0] * g_dims[1], g_dims[2], g_dims[3], g_dims[4])
+
+            fake_image = fake_image.reshape(img_dims[0] * img_dims[1], img_dims[2], img_dims[3], img_dims[4])
+            real_image = real_image.reshape(img_dims[0] * img_dims[1], img_dims[2], img_dims[3], img_dims[4])
+
         pred_fake_pool = self.discriminate( g_in, fake_image, use_pool=True)
         loss_D_fake = self.criterionGAN(pred_fake_pool, False)        
 
@@ -159,8 +199,20 @@ class Lmark2RGBModel1(BaseModel):
         pred_real = self.discriminate( g_in, real_image)
         loss_D_real = self.criterionGAN(pred_real, True)
 
-        # GAN loss (Fake Passability Loss)        
-        pred_fake = self.netD.forward(torch.cat(( g_in, fake_image), dim=1))        
+        # GAN loss (Fake Passability Loss)
+        pred_fake = self.netD.forward(torch.cat(( g_in, fake_image), dim=1))         
+        # if self.use_lstm:
+        #     tmp_gg = []
+        #     for gg in pred_fake:
+        #         tmp_g = []
+        #         for g in gg:
+        #             g_dimes =  g.shape
+        #             g = g.reshape(img_dims[0], img_dims[1], g_dimes[1], g_dimes[2], g_dimes[3] )
+        #             g  = g.mean(dim = 1)
+        #             tmp_g.append(g)
+        #         tmp_gg.append(tmp_g)
+        #     pred_fake = tmp_gg
+                   
         loss_G_GAN = self.criterionGAN(pred_fake, True)               
         
         # GAN feature matching loss
