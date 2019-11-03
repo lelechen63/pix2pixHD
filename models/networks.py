@@ -426,7 +426,7 @@ class GlobalGenerator(nn.Module):
             fea = self.def_conv_3(fea, offset_3)
             background_feature = self.def_conv3_norm(fea)
 
-            background_img = self.last_conv(background_feature)
+            background_img = self.conv_lst(background_feature)
             image = (1- beta) * background_img + beta * face_foreground
         
         return [image, cropped_similar_img, face_foreground, beta, alpha, I_hat]
