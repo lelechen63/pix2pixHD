@@ -44,14 +44,19 @@ for i, data in enumerate(dataset):
     else:
         generated = model.inference(Variable(data['reference_frames']), Variable(data['target_lmark']), \
           Variable(data['target_ani']),  Variable(data['target_rgb']), similar_img, Variable(data['cropped_similar_image'] ))
-    visuals = OrderedDict([('reference1', util.tensor2im(data['reference_frames'][0, 0,:3])),
-                                    # ('reference2', util.tensor2im(data['reference_frames'][0, 1,:3])),
-                                    # ('reference3', util.tensor2im(data['reference_frames'][0, 2,:3])),
-                                    # ('reference4', util.tensor2im(data['reference_frames'][0, 3,:3])),
-                                   ('target_lmark', util.tensor2im(data['target_lmark'][0])),
-                                   ('target_ani', util.tensor2im(data['target_ani'][0])),
-                                   ('synthesized_image', util.tensor2im(generated[0].data[0])),
-                                   ('real_image', util.tensor2im(data['target_rgb'][0]))])
+    
+    visuals = OrderedDict([( 'reference1', util.tensor2im(data['reference_frames'][0, 0,:3])),
+                                ('target_lmark', util.tensor2im(data['target_lmark'][0])),
+                                ('target_ani', util.tensor2im(data['target_ani'][0])),
+                                ('synthesized_image', util.tensor2im(generated[0].data[0])),
+                                ('masked_similar_img', util.tensor2im(generated[1].data[0])),
+                                ('face_foreground', util.tensor2im(generated[2].data[0])),
+                                ('beta', util.tensor2im(generated[3].data[0])),
+                                ('alpha', util.tensor2im(generated[4].data[0])),
+                                ('I_hat', util.tensor2im(generated[5].data[0])),
+                                ('real_image', util.tensor2im(data['target_rgb'][0]))])
+    
+    
     img_path = data['v_id']
     print('process image... %s' % img_path)
 
