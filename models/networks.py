@@ -341,19 +341,19 @@ class GlobalGenerator(nn.Module):
                        3,
                        norm='none',
                        activ='relu')
-        if not self.deform:
-            model = [nn.ReflectionPad2d(3), nn.Conv2d(6, 32, kernel_size=7, padding=0), norm_layer(32), nn.ReLU(True) ]
-            ### downsample
-            model += [Conv2dBlock(32, 64, 4, 2, 1,           # 128, 128, 128 
-                                        norm= 'in',
-                                        activation=activ,
-                                        pad_type=pad_type)]
+        
+        model = [nn.ReflectionPad2d(3), nn.Conv2d(6, 32, kernel_size=7, padding=0), norm_layer(32), nn.ReLU(True) ]
+        ### downsample
+        model += [Conv2dBlock(32, 64, 4, 2, 1,           # 128, 128, 128 
+                                    norm= 'in',
+                                    activation=activ,
+                                    pad_type=pad_type)]
 
-            model += [nn.ConvTranspose2d(64, 64,kernel_size=4, stride=(2),padding=(1)),
-                        nn.InstanceNorm2d(64),
-                        nn.ReLU(True)
-            ]
-            self.foregroundNet = nn.Sequential(*model)
+        model += [nn.ConvTranspose2d(64, 64,kernel_size=4, stride=(2),padding=(1)),
+                    nn.InstanceNorm2d(64),
+                    nn.ReLU(True)
+        ]
+        self.foregroundNet = nn.Sequential(*model)
             
         else:
             self.conv_first =  nn.Sequential(*[nn.ReflectionPad2d(3), nn.Conv2d(6, 64, kernel_size=7, padding=0), norm_layer(64), nn.ReLU(False) ])
@@ -406,10 +406,7 @@ class GlobalGenerator(nn.Module):
         foreground_feature = self.foregroundNet( torch.cat([ani_img, similar_img], 1) ) 
         forMask_feature = torch.cat([foreground_feature, I_feature ], 1)
         beta = self.beta(forMask_feature)
-        if not self.deform:
-            
-            # mask = ani_img> -0.9
-            # similar_img[mask] = -1 
+        if not self.deform: 
             image = (1- beta) * cropped_similar_img + beta * face_foreground 
         else:   
             feature = torch.cat([face_foreground, cropped_similar_img], 1)
@@ -432,7 +429,6 @@ class GlobalGenerator(nn.Module):
             background_img = self.last_conv(background_feature)
             image = (1- beta) * background_img + beta * face_foreground
         
-
         return [image, cropped_similar_img, face_foreground, beta, alpha, I_hat]
 
 
