@@ -429,7 +429,7 @@ class GlobalGenerator(nn.Module):
             background_img = self.conv_lst(background_feature)
             image = (1- beta) * background_img + beta * face_foreground
         
-        return [image, cropped_similar_img, face_foreground, beta, alpha, I_hat]
+        return [image, background_img, face_foreground, beta, alpha, I_hat]
 
 
 class GlobalGenerator_lstm(nn.Module):
@@ -551,21 +551,21 @@ class GlobalGenerator_lstm(nn.Module):
                        activ='relu')
         
         
-        if not self.deform:
-            model = [nn.ReflectionPad2d(3), nn.Conv2d(6, 32, kernel_size=7, padding=0), norm_layer(32), nn.ReLU(True) ]
-            ### downsample
-            model += [Conv2dBlock(32, 64, 4, 2, 1,           # 128, 128, 128 
-                                        norm= 'in',
-                                        activation=activ,
-                                        pad_type=pad_type)]
+    
+        model = [nn.ReflectionPad2d(3), nn.Conv2d(6, 32, kernel_size=7, padding=0), norm_layer(32), nn.ReLU(True) ]
+        ### downsample
+        model += [Conv2dBlock(32, 64, 4, 2, 1,           # 128, 128, 128 
+                                    norm= 'in',
+                                    activation=activ,
+                                    pad_type=pad_type)]
 
-            model += [nn.ConvTranspose2d(64, 64,kernel_size=4, stride=(2),padding=(1)),
-                        nn.InstanceNorm2d(64),
-                        nn.ReLU(True)
-            ]
-            self.foregroundNet = nn.Sequential(*model)
+        model += [nn.ConvTranspose2d(64, 64,kernel_size=4, stride=(2),padding=(1)),
+                    nn.InstanceNorm2d(64),
+                    nn.ReLU(True)
+        ]
+        self.foregroundNet = nn.Sequential(*model)
             
-        else:
+        if  self.deform::
             self.conv_first =  nn.Sequential(*[nn.ReflectionPad2d(3), nn.Conv2d(6, 64, kernel_size=7, padding=0), norm_layer(64), nn.ReLU(False) ])
             self.off2d_1 = nn.Sequential(*[  nn.Conv2d(64, 18 * 8, kernel_size=3, stride =1, padding=1), nn.InstanceNorm2d(18 * 8), nn.ReLU(False)])
             self.def_conv_1 = DeformConv(64, 64, 3,stride =1, padding =1, deformable_groups= 8)
@@ -580,7 +580,10 @@ class GlobalGenerator_lstm(nn.Module):
 
             self.def_conv_3 = DeformConv( 128, 64, 3,stride =1, padding =1, deformable_groups= 8)
             self.def_conv3_norm = nn.Sequential(*[  nn.InstanceNorm2d(64), nn.ReLU(False)])
-
+            self.conv_last = Conv2dBlock(64, 3, 7, 1, 3,
+                                   norm='none',
+                                   activation='tanh',
+                                   pad_type=pad_type)
         self.beta  = Conv2dBlock(128, 1, 7, 1, 3,
                                     norm='none',
                                     activation='sigmoid',
@@ -641,15 +644,15 @@ class GlobalGenerator_lstm(nn.Module):
                 alphas.append(alpha_t)
                 face_foreground = (1 - alpha_t) * ani_img_t + alpha_t * I_hat_t
                 face_foregrounds.append(face_foreground)
+                foreground_feature_t = self.foregroundNet( torch.cat([ani_img_t, similar_img_t], 1) ) 
+                forMask_feature_t = torch.cat([foreground_feature_t, I_feature_t ], 1)
+                beta = self.beta(forMask_feature_t)
+                betas.append(beta)
                 if not self.deform:
-                    foreground_feature_t = self.foregroundNet( torch.cat([ani_img_t, similar_img_t], 1) ) 
-                    forMask_feature_t = torch.cat([foreground_feature_t, I_feature_t ], 1)
-                    beta = self.beta(forMask_feature_t)
-                    betas.append(beta)
                     image = (1- beta) * cropped_similar_img_t + beta * face_foreground 
                     outputs.append(image)
                 else:
-                    feature = torch.cat([ani_img_t, cropped_similar_img_t], 1)
+                    feature = torch.cat([face_foreground, cropped_similar_img_t], 1)
                     fea = self.conv_first(feature)
                     offset_1 = self.off2d_1(fea)
 
@@ -664,13 +667,9 @@ class GlobalGenerator_lstm(nn.Module):
                     offset_3 = self.off2d_3(fea)
                     
                     fea = self.def_conv_3(fea, offset_3)
-                    foreground_feature = self.def_conv3_norm(fea)
-
-                    forMask_feature = torch.cat([foreground_feature, I_feature ], 1)
-                    beta = self.beta(forMask_feature)
-                    betas.append(beta)
-
-                    image = (1- beta) * cropped_similar_img_t + beta * face_foreground
+                    background_feature = self.def_conv3_norm(fea)
+                    background_img = self.conv_lst(background_feature)
+                    image = (1- beta) * background_img + beta * face_foreground
                     outputs.append(image)
         
         return [torch.stack(outputs, dim = 1) ,cropped_similar_img, \

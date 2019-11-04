@@ -292,7 +292,8 @@ class Lmark2rgbLSTMDataset(Dataset):
             target_ani = cv2.resize(target_ani, self.output_shape)
             target_ani = self.transform(target_ani)
             target_anis[kk] = target_ani
-            cropped_similar_img = similar_frame[target_ani > -0.9 ] = -1
+            cropped_similar_img = similar_frame.clone()
+            cropped_similar_img[target_ani > -0.9 ] = -1
 
             cropped_similar_image[kk] = cropped_similar_img
 

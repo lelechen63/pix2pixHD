@@ -43,7 +43,7 @@ class BaseOptions():
         self.parser.add_argument('--netG', type=str, default='global', help='selects model to use for netG')
         self.parser.add_argument('--num_frames', type=int, default=4, help='num of frames for embedding  ')
         self.parser.add_argument('--ngf', type=int, default=64, help='# of gen filters in first conv layer')
-        self.parser.add_argument('--use_lstm', type=bool, default=False, help='use lstm')
+        self.parser.add_argument('--use_lstm', action='store_true', help='use lstm')
         self.parser.add_argument('--use_deform', action='store_true', help='use deform')
         self.parser.add_argument('--lstm_length', type=int, default=32, help='length of lstm')
         self.parser.add_argument('--n_downsample_global', type=int, default=4, help='number of downsampling layers in netG') 
