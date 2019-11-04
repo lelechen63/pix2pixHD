@@ -408,8 +408,9 @@ class GlobalGenerator(nn.Module):
         beta = self.beta(forMask_feature)
         if not self.deform: 
             image = (1- beta) * cropped_similar_img + beta * face_foreground 
+            return [image, cropped_similar_img, face_foreground, beta, alpha, I_hat]
         else:   
-            feature = torch.cat([face_foreground, cropped_similar_img], 1)
+            feature = torch.cat([face_foreground.detach(), cropped_similar_img], 1)
             fea = self.conv_first(feature)
             offset_1 = self.off2d_1(fea)
 
@@ -429,7 +430,7 @@ class GlobalGenerator(nn.Module):
             background_img = self.conv_lst(background_feature)
             image = (1- beta) * background_img + beta * face_foreground
         
-        return [image, cropped_similar_img, face_foreground, beta, alpha, I_hat]
+            return [image, background_img, face_foreground, beta, alpha, I_hat]
 
 
 class GlobalGenerator_lstm(nn.Module):
