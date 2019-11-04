@@ -429,7 +429,7 @@ class GlobalGenerator(nn.Module):
             background_img = self.conv_lst(background_feature)
             image = (1- beta) * background_img + beta * face_foreground
         
-        return [image, background_img, face_foreground, beta, alpha, I_hat]
+        return [image, cropped_similar_img, face_foreground, beta, alpha, I_hat]
 
 
 class GlobalGenerator_lstm(nn.Module):
