@@ -340,34 +340,6 @@ class Conv2dGRU(ConvNdRNNBase):
             groups=groups)
 
 
-class Conv2dAdaInGRU(AdaInConvNdRNNBase):
-    def __init__(self,
-                 in_channels,
-                 out_channels,
-                 kernel_size,
-                 num_layers=1,
-                 bias=True,
-                 batch_first=True,
-                 dropout=0.,
-                 bidirectional=False,
-                 stride=1,
-                 dilation=1,
-                 groups=1):
-        super(Conv2dAdaInGRU, self).__init__(
-            mode='GRU',
-            in_channels=in_channels,
-            out_channels=out_channels,
-            kernel_size=kernel_size,
-            num_layers=num_layers,
-            bias=bias,
-            batch_first=batch_first,
-            dropout=dropout,
-            bidirectional=bidirectional,
-            convndim=2,
-            stride=stride,
-            dilation=dilation,
-            groups=groups)
-
 
 
 class Conv3dRNN(ConvNdRNNBase):
