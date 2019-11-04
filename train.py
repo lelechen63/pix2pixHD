@@ -141,7 +141,7 @@ with torch.autograd.set_detect_anomaly(False):
                                             ('target_ani', util.tensor2im(data['target_ani'][0,0])),
                                             ('synthesized_image', util.tensor2im(generated[0].data[0,0])),
                                             ('masked_similar_img', util.tensor2im(generated[1].data[0,0])),
-                                            ('face_foreground', util.tensor2im(generated[2].data[0])),
+                                            ('face_foreground', util.tensor2im(generated[2].data[0,0])),
                                             ('beta', util.tensor2im(generated[3].data[0,0])),
                                             ('alpha', util.tensor2im(generated[4].data[0,0])),
                                             ('I_hat', util.tensor2im(generated[5].data[0,0])),
