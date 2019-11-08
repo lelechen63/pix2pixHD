@@ -381,7 +381,7 @@ class Lmark2rgbLSTMDataset(Dataset):
 
             mask = target_ani > -0.9
             mask = scipy.ndimage.morphology.binary_dilation(mask.numpy(),iterations = 5).astype(np.bool)
-            cropped_similar_image[torch.tensor(mask)] = -1 
+            cropped_similar_img[torch.tensor(mask)] = -1 
 
             cropped_similar_image[kk] = cropped_similar_img
 
