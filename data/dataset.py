@@ -2,6 +2,7 @@ import os
 from datetime import datetime
 import pickle as pkl
 import random
+import scipy.ndimage.morphology
 
 import PIL
 import cv2
