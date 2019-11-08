@@ -162,7 +162,7 @@ class Lmark2rgbDataset(Dataset):
             similar_frame = reference_frames[similar_id,:3]
             cropped_similar_image = similar_frame.clone()
             mask = target_ani > -0.9
-            mask = scipy.ndimage.morphology.binary_dilation(mask.numpy(),iterations = 5).astype(np.uint8)
+            mask = scipy.ndimage.morphology.binary_dilation(mask.numpy(),iterations = 5).astype(np.bool)
             cropped_similar_image[torch.tensor(mask)] = -1 
 
 
