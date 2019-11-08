@@ -15,9 +15,6 @@ from torch.utils.data import Dataset
 import torch
 import torchvision.transforms as transforms
 import mmcv
-
-
- 
 from io import BytesIO
 from PIL import Image
 
@@ -50,13 +47,13 @@ class Lmark2rgbDataset(Dataset):
             # self.data = pkl.load(_file)
             self.data = pkl._Unpickler(_file)
             self.data.encoding = 'latin1'
-            self.data = self.data.load()
+            self.data = self.data.load()[1:]
             _file.close()
         else:
             _file = open(os.path.join(self.root, 'txt', "front_rt2.pkl"), "rb")
             self.data = pkl._Unpickler(_file)
             self.data.encoding = 'latin1'
-            self.data = self.data.load()
+            self.data = self.data.load()[1:]
             # self.data = pkl.load(_file)
             _file.close()
         print (len(self.data))
@@ -78,14 +75,9 @@ class Lmark2rgbDataset(Dataset):
         # try:
             v_id = self.data[index][0]
             reference_id = self.data[index][1]
-
             video_path = os.path.join(self.root, 'unzip', v_id + '.mp4')
-            
             ani_video_path = os.path.join(self.root, 'unzip', v_id + '_ani.mp4')
-
             rt_path = os.path.join(self.root, 'unzip', v_id + '_sRT.npy')
-
-
             lmark_path = os.path.join(self.root, 'unzip', v_id + '.npy')
 
 
@@ -168,7 +160,9 @@ class Lmark2rgbDataset(Dataset):
             target_lmark = self.transform(target_lmark)
             similar_frame = reference_frames[similar_id,:3]
             cropped_similar_image = similar_frame.clone()
-            cropped_similar_image[target_ani> -0.9] = -1 
+            mask = target_ani > -0.9
+            mask = scipy.ndimage.morphology.binary_dilation(mask.numpy(),iterations = 5).astype(np.uint8)
+            cropped_similar_image[torch.tensor(mask)] = -1 
 
 
             input_dic = {'v_id' : v_id, 'target_lmark': target_lmark, 'reference_frames': reference_frames, \
@@ -179,6 +173,96 @@ class Lmark2rgbDataset(Dataset):
         #     return None
 
 
+class Voxceleb_audio_lmark_single(Dataset):
+    def __init__(self,
+                 opt):      
+        
+        self.output_shape   = tuple([opt.loadSize, opt.loadSize])
+        self.num_frames = opt.num_frames
+        self.opt = opt
+        self.root  = opt.dataroot
+        
+        if opt.isTrain:
+            if self.root == '/home/cxu-serve/p1/lchen63/voxceleb' or opt.use_ft:
+                _file = open(os.path.join(self.root, 'txt', "front_rt2.pkl"), "rb")
+            else:
+                _file = open(os.path.join(self.root, 'txt',  "train_front_rt2.pkl"), "rb")
+
+            # self.data = pkl.load(_file)
+            self.data = pkl._Unpickler(_file)
+            self.data.encoding = 'latin1'
+            self.data = self.data.load()
+            _file.close()
+        else:
+            _file = open(os.path.join(self.root, 'txt', "front_rt2.pkl"), "rb")
+            self.data = pkl._Unpickler(_file)
+            self.data.encoding = 'latin1'
+            self.data = self.data.load()
+            # self.data = pkl.load(_file)
+            _file.close()
+        print (len(self.data))
+        self.transform = transforms.Compose([
+            transforms.ToTensor(),
+            transforms.Normalize(mean=(0.5, 0.5, 0.5), std=(0.5, 0.5, 0.5))
+        ])
+
+        self.consider_key = [1,2,3,4,5,11,12,13,14,15,27,28,29,30,31,32,33,34,35,39,42,36,45,17,21,22,26]
+    def __getitem__(self, index):
+        v_id = self.data[index][0]
+        reference_id = self.data[index][1]
+        lmark_path = os.path.join(self.root, 'unzip', v_id + '_front.npy')
+
+        audio_path  = os.path.join(self.root, 'unzip', v_id.replace('_video', '_audio') + '.npy')
+
+        tmp = self.data[index][0].split('/')
+        lmark = np.load( os.path.join(self.root, 'unzip', self.data[index][0] + '_front.npy' ))
+        if self.train == 'train':
+            audio_path = os.path.join(self.root, 'unzip', 'test_audio' , tmp[1],tmp[2], tmp[3] +'.npy' )
+        else:
+            audio_path = os.path.join(self.root, 'unzip', 'test_audio' , tmp[1],tmp[2], tmp[3] +'.npy' )
+            rts = np.load(os.path.join(self.root, 'unzip', self.data[index][0] + '_sRT.npy' ))
+        audio = np.load(audio_path)
+        sample_id = self.data[index][1]
+        lmark_length = lmark.shape[0]
+        audio_length = audio.shape[0]
+        lmark = utils.smooth(lmark)
+        audio_pad = np.zeros((lmark.shape[0] * 4, 13))
+        if audio_length < lmark_length * 4 :
+            audio_pad[:audio_length] = audio
+            audio = audio_pad
+        
+        if sample_id < 3:
+            sample_audio = np.zeros((28,12))
+            sample_audio[4 * (3- sample_id): ] = audio[4 * (0) : 4 * ( 3 + sample_id + 1 ), 1: ]
+
+        elif sample_id > lmark_length - 4:
+            sample_audio = np.zeros((28,12))
+            sample_audio[:4 * ( lmark_length + 3 - sample_id )] = audio[4 * (sample_id -3) : 4 * ( lmark_length ), 1: ]
+
+        else:
+            sample_audio = audio[4 * (sample_id -3) : 4 * ( sample_id + 4 ) , 1: ]
+        
+        sample_lmark = lmark[sample_id]
+        sample_audio =torch.FloatTensor(sample_audio)
+        sample_lmark =torch.FloatTensor(sample_lmark)            
+        sample_lmark = sample_lmark.view(-1)
+
+
+        ex_id = self.data[index][2]
+        ex_lmark = lmark[ex_id]
+        ex_lmark =torch.FloatTensor(ex_lmark)
+        
+        ex_lmark = ex_lmark.view(-1)
+        
+        # input_dict = {'audio': sample_audio , 'lip_region': lip_region, 'other_region': other_region, 'ex_other_region':ex_other_region,'ex_lip_region':ex_lip_region,   'img_path': self.data[index][0], 'sample_id' : sample_id, 'sample_rt': rts[sample_id] if self.train == 'test' else 1}
+        input_dict = {'audio': sample_audio , 'sample_lmark': sample_lmark, 'ex_lmark': ex_lmark,   'img_path': self.data[index][0], 'sample_id' : sample_id, 'sample_rt': rts[sample_id] if self.train == 'test' else 1}
+
+        return (input_dict)   
+#         except:
+#             return self.__getitem__((index + 1)% len(self.data))
+    def __len__(self):
+        
+            return len(self.data)        
 
 
 class Lmark2rgbLSTMDataset(Dataset):
@@ -211,7 +295,7 @@ class Lmark2rgbLSTMDataset(Dataset):
             _file = open(os.path.join(self.root, 'txt', "front_rt2.pkl"), "rb")
             self.data = pkl._Unpickler(_file)
             self.data.encoding = 'latin1'
-            self.data = self.data.load()
+            self.data = self.data.load()[1:]
             # self.data = pkl.load(_file)
             _file.close()
         print (len(self.data))
