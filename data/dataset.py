@@ -328,7 +328,7 @@ class Lmark2rgbLSTMDataset(Dataset):
         # sample frames for embedding network
         input_indexs  = random.sample(range(0,64), self.num_frames)
         # we randomly choose a start target frame 
-        start_target_id =  np.random.choice([0, v_length - self.lstm_length])
+        start_target_id =  np.random.choice([64, v_length - self.lstm_length])
         reference_frames = torch.zeros(self.num_frames, 6 ,self.output_shape[0],self.output_shape[1])
         reference_rts = np.zeros((self.num_frames, 3))
         target_rts = rt[start_target_id: start_target_id + self.lstm_length]
@@ -378,7 +378,10 @@ class Lmark2rgbLSTMDataset(Dataset):
             target_ani = self.transform(target_ani)
             target_anis[kk] = target_ani
             cropped_similar_img = similar_frame.clone()
-            cropped_similar_img[target_ani > -0.9 ] = -1
+
+            mask = target_ani > -0.9
+            mask = scipy.ndimage.morphology.binary_dilation(mask.numpy(),iterations = 5).astype(np.bool)
+            cropped_similar_image[torch.tensor(mask)] = -1 
 
             cropped_similar_image[kk] = cropped_similar_img
 
