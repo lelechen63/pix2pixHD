@@ -108,9 +108,10 @@ class Lmark2rgbDataset(Dataset):
                     input_indexs = set(input_indexs ) - set(target_id)
                     input_indexs =list(input_indexs)                    
             else:
+                print ('gggggggggggggg')
                 input_indexs  = set(random.sample(range(0,64), self.num_frames))
                 # we randomly choose a target frame 
-                target_id =  np.random.choice( 63, v_length - 1)
+                target_id =  random.randint( 64, v_length - 1)
                     
             reference_frames = []
             reference_rt_diffs = []
@@ -339,7 +340,7 @@ class Lmark2rgbLSTMDataset(Dataset):
                 input_indexs = [1, 3, 5, 7, 9, 11, 13, 15, 17, 19, 21, 23, 25, 27, 29, 31, 33, 35, 37, 39, 41, 43, 45, 47, 49, 51, 53, 55, 57, 59, 61, 63]
 
         # we randomly choose a start target frame 
-        start_target_id =  np.random.choice([64, v_length - self.lstm_length])
+        start_target_id =  random.randint(64, v_length - self.lstm_length)
         reference_frames = torch.zeros(self.num_frames, 6 ,self.output_shape[0],self.output_shape[1])
         reference_rts = np.zeros((self.num_frames, 3))
         target_rts = rt[start_target_id: start_target_id + self.lstm_length]
