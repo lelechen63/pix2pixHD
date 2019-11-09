@@ -111,7 +111,7 @@ class Lmark2rgbDataset(Dataset):
                 input_indexs  = set(random.sample(range(0,64), self.num_frames))
                 # we randomly choose a target frame 
                 while True:
-                    target_id =  np.random.choice( v_length - 1)
+                    target_id =  np.random.choice( 64, v_length - 1)
                     if target_id not in input_indexs:
                         break
             reference_frames = []
@@ -326,7 +326,17 @@ class Lmark2rgbLSTMDataset(Dataset):
         real_video  = mmcv.VideoReader(video_path)
         ani_video = mmcv.VideoReader(ani_video_path)
         # sample frames for embedding network
-        input_indexs  = random.sample(range(0,64), self.num_frames)
+        if self.opt.isTrain: 
+            input_indexs  = random.sample(range(0,64), self.num_frames)
+        else:
+            if self.num_frames  ==1 :
+                input_indexs = [0]
+            elif self.num_frames == 8:
+                input_indexs = [0,7,15,23,31,39,47,55]
+
+            elif self.num_frames == 32:
+                input_indexs = [1, 3, 5, 7, 9, 11, 13, 15, 17, 19, 21, 23, 25, 27, 29, 31, 33, 35, 37, 39, 41, 43, 45, 47, 49, 51, 53, 55, 57, 59, 61, 63]
+
         # we randomly choose a start target frame 
         start_target_id =  np.random.choice([64, v_length - self.lstm_length])
         reference_frames = torch.zeros(self.num_frames, 6 ,self.output_shape[0],self.output_shape[1])
@@ -380,6 +390,7 @@ class Lmark2rgbLSTMDataset(Dataset):
             cropped_similar_img = similar_frame.clone()
 
             mask = target_ani > -0.9
+            
             mask = scipy.ndimage.morphology.binary_dilation(mask.numpy(),iterations = 5).astype(np.bool)
             cropped_similar_img[torch.tensor(mask)] = -1 
 
