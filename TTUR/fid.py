@@ -350,11 +350,12 @@ def compare_ssim(path):
         f_i = cv2.cvtColor(f_i, cv2.COLOR_RGB2GRAY)
         r_i = cv2.cvtColor(r_i, cv2.COLOR_RGB2GRAY)
         psnr = psnr_f(f_i,r_i)
-
-
         psnrs.append(psnr)
         ssims.append(ssim)
         dis_txt.write(fake_path + "\t ssim: {:.4f},\t psnr: {:.4f}".format( ssim, psnr) + '\n') 
+        
+        
+        
         # except:
         #     print ('gggg')
         #     continue
