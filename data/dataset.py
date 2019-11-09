@@ -108,7 +108,6 @@ class Lmark2rgbDataset(Dataset):
                     input_indexs = set(input_indexs ) - set(target_id)
                     input_indexs =list(input_indexs)                    
             else:
-                print ('gggggggggggggg')
                 input_indexs  = set(random.sample(range(0,64), self.num_frames))
                 # we randomly choose a target frame 
                 target_id =  random.randint( 64, v_length - 1)
@@ -141,9 +140,6 @@ class Lmark2rgbDataset(Dataset):
             reference_frames = torch.stack(reference_frames)
             
             ############################################################################
-            print (target_id)
-            print ('=====')
-            print (len(real_video))
             target_rgb = real_video[target_id]
             reference_rgb = real_video[reference_id]
             reference_ani = ani_video[reference_id]
