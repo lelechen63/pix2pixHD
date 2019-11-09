@@ -110,7 +110,7 @@ class Lmark2rgbDataset(Dataset):
             else:
                 input_indexs  = set(random.sample(range(0,64), self.num_frames))
                 # we randomly choose a target frame 
-                target_id =  np.random.choice( 64, v_length - 1)
+                target_id =  np.random.choice( 63, v_length - 1)
                     
             reference_frames = []
             reference_rt_diffs = []
