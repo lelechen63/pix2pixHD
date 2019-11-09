@@ -140,7 +140,7 @@ class Lmark2rgbDataset(Dataset):
             reference_frames = torch.stack(reference_frames)
             
             ############################################################################
-            print (targed_id)
+            print (target_id)
             print ('=====')
             print (len(real_video))
             target_rgb = real_video[target_id]
