@@ -601,7 +601,9 @@ class GlobalGenerator_lstm(nn.Module):
             for step_t in range(g_in.shape[1]):
                 feature_t = feature_list[:, step_t,:,:,:]
                 outputs.append(self.decoder(feature_t))
-            return torch.stack(outputs, dim = 1) 
+            print ('*******')
+            print (len*(outputs))
+            return [torch.stack(outputs, dim = 1)]
         else:
             outputs = []
             alphas  = []
@@ -630,30 +632,8 @@ class GlobalGenerator_lstm(nn.Module):
                 forMask_feature_t = torch.cat([foreground_feature_t, I_feature_t ], 1)
                 beta = self.beta(forMask_feature_t)
                 betas.append(beta)
-                if not self.deform:
-                    image = (1- beta) * cropped_similar_img_t + beta * face_foreground 
-                    outputs.append(image)
-        #         else:
-        #             feature = torch.cat([face_foreground, cropped_similar_img_t], 1)
-        #             fea = self.conv_first(feature)
-        #             offset_1 = self.off2d_1(fea)
-
-        #             fea = self.def_conv_1(fea, offset_1)
-        #             fea = self.def_conv_1_norm(fea)
-
-        #             offset_2 = self.off2d_2(fea)
-
-        #             fea = self.def_conv_2(fea, offset_2)
-        #             fea = self.def_conv_2_norm(fea)
-
-        #             offset_3 = self.off2d_3(fea)
-                    
-        #             fea = self.def_conv_3(fea, offset_3)
-        #             background_feature = self.def_conv3_norm(fea)
-        #             background_img = self.conv_lst(background_feature)
-        #             image = (1- beta) * background_img + beta * face_foreground
-        #             outputs.append(image)
-        
+                
+      
         return [torch.stack(outputs, dim = 1) ,cropped_similar_img, \
             torch.stack(face_foregrounds, dim = 1), torch.stack(betas, dim = 1), torch.stack(alphas, dim = 1) \
                 , torch.stack(I_hats, dim = 1)]

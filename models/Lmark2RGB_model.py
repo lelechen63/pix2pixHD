@@ -179,6 +179,8 @@ class Lmark2RGBModel1(BaseModel):
         
         fake_list = self.netG.forward(references, g_in , similar_frame, cropped_similar_img)
         # if self.attention:
+        print (len(fake_list))
+        print ('++++++')
         fake_image = fake_list[0]
         # Fake Detection and Loss
 
