@@ -602,7 +602,7 @@ class GlobalGenerator_lstm(nn.Module):
                 feature_t = feature_list[:, step_t,:,:,:]
                 outputs.append(self.decoder(feature_t))
             print ('*******')
-            print (len*(outputs))
+            print (len(outputs))
             return [torch.stack(outputs, dim = 1)]
         else:
             outputs = []
