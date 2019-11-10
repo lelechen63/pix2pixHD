@@ -102,63 +102,44 @@ with torch.autograd.set_detect_anomaly(False):
 
             ### display output images
             if not opt.use_lstm:
-                if save_fake and len(generated)> 1:
-                    if opt.num_frames >= 4:
-                        visuals = OrderedDict([( 'reference1', util.tensor2im(data['reference_frames'][0, 0,:3])),
-                                                ('reference2', util.tensor2im(data['reference_frames'][0, 1,:3])),
-                                                ('reference3', util.tensor2im(data['reference_frames'][0, 2,:3])),
-                                                ('reference4', util.tensor2im(data['reference_frames'][0, 3,:3])),
-                                            ('target_lmark', util.tensor2im(data['target_lmark'][0])),
-                                            ('target_ani', util.tensor2im(data['target_ani'][0])),
-                                            ('synthesized_image', util.tensor2im(generated[0].data[0])),
-                                            ('masked_similar_img', util.tensor2im(generated[1].data[0])),
-                                            ('face_foreground', util.tensor2im(generated[2].data[0])),
-                                            ('beta', util.tensor2im(generated[3].data[0])),
-                                            ('alpha', util.tensor2im(generated[4].data[0])),
-                                            ('I_hat', util.tensor2im(generated[5].data[0])),
-                                            ('real_image', util.tensor2im(data['target_rgb'][0]))])
-                    else:
-                        visuals = OrderedDict([( 'reference1', util.tensor2im(data['reference_frames'][0, 0,:3])),
-                                            ('target_lmark', util.tensor2im(data['target_lmark'][0])),
-                                            ('target_ani', util.tensor2im(data['target_ani'][0])),
-                                            ('synthesized_image', util.tensor2im(generated[0].data[0])),
-                                            ('masked_similar_img', util.tensor2im(generated[1].data[0])),
-                                            ('face_foreground', util.tensor2im(generated[2].data[0])),
-                                            ('beta', util.tensor2im(generated[3].data[0])),
-                                            ('alpha', util.tensor2im(generated[4].data[0])),
-                                            ('I_hat', util.tensor2im(generated[5].data[0])),
-                                            ('real_image', util.tensor2im(data['target_rgb'][0]))])
-                    visualizer.display_current_results(visuals, epoch, total_steps)
+                    
+                tmp = []
+                tmp.extend([( 'reference1', util.tensor2im(data['reference_frames'][0, 0,:3]))])
+                if opt.num_frames >= 4:
+                    tmp.extend([('reference2', util.tensor2im(data['reference_frames'][0, 1,:3])),
+                                        ('reference3', util.tensor2im(data['reference_frames'][0, 2,:3])),
+                                        ('reference4', util.tensor2im(data['reference_frames'][0, 3,:3]))])
+                tmp.extend([('target_lmark', util.tensor2im(data['target_lmark'][0])),
+                                    ('target_ani', util.tensor2im(data['target_ani'][0])),
+                                    ('synthesized_image', util.tensor2im(generated[0].data[0])),
+                                    ('real_image', util.tensor2im(data['target_rgb'][0]))])
+                if not opt.no_att:
+                    tmp.extend([('masked_similar_img', util.tensor2im(generated[1].data[0])),
+                                    ('face_foreground', util.tensor2im(generated[2].data[0])),
+                                    ('beta', util.tensor2im(generated[3].data[0])),
+                                    ('alpha', util.tensor2im(generated[4].data[0])),
+                                    ('I_hat', util.tensor2im(generated[5].data[0]))])
+                
+                visuals = OrderedDict(tmp)
             else:
-                # continue
-                if save_fake and len(generated)> 1:
-                    if opt.num_frames >= 4:
-                        visuals = OrderedDict([( 'reference1', util.tensor2im(data['reference_frames'][0, 0,:3])),
-                                                ('reference2', util.tensor2im(data['reference_frames'][0, 1,:3])),
-                                                ('reference3', util.tensor2im(data['reference_frames'][0, 2,:3])),
-                                                ('reference4', util.tensor2im(data['reference_frames'][0, 3,:3])),
-                                            ('target_lmark', util.tensor2im(data['target_lmark'][0,0])),
+                tmp = []
+                tmp.extend([( 'reference1', util.tensor2im(data['reference_frames'][0, 0,:3]))])
+                if opt.num_frames >= 4:
+                    tmp.extend([('reference2', util.tensor2im(data['reference_frames'][0, 1,:3])),
+                                        ('reference3', util.tensor2im(data['reference_frames'][0, 2,:3])),
+                                        ('reference4', util.tensor2im(data['reference_frames'][0, 3,:3]))])
+                tmp.extend([('target_lmark', util.tensor2im(data['target_lmark'][0,0])),
                                             ('target_ani', util.tensor2im(data['target_ani'][0,0])),
                                             ('synthesized_image', util.tensor2im(generated[0].data[0,0])),
-                                            ('masked_similar_img', util.tensor2im(generated[1].data[0,0])),
+                                            ('real_image', util.tensor2im(data['target_rgb'][0,0]))])
+                if not opt.no_att:
+                    tmp.extend([('masked_similar_img', util.tensor2im(generated[1].data[0,0])),
                                             ('face_foreground', util.tensor2im(generated[2].data[0,0])),
                                             ('beta', util.tensor2im(generated[3].data[0,0])),
                                             ('alpha', util.tensor2im(generated[4].data[0,0])),
-                                            ('I_hat', util.tensor2im(generated[5].data[0,0])),
-                                            ('real_image', util.tensor2im(data['target_rgb'][0,0]))])
-                    else:
-                        print ('================================')
-                        visuals = OrderedDict([( 'reference1', util.tensor2im(data['reference_frames'][0, 0,:3])),
-                                            ('target_lmark', util.tensor2im(data['target_lmark'][0,0])),
-                                            ('target_ani', util.tensor2im(data['target_ani'][0,0])),
-                                            ('synthesized_image', util.tensor2im(generated[0].data[0,0])),
-                                            ('masked_similar_img', util.tensor2im(generated[1].data[0,0])),
-                                            ('face_foreground', util.tensor2im(generated[2].data[0,0])),
-                                            ('beta', util.tensor2im(generated[3].data[0,0])),
-                                            ('alpha', util.tensor2im(generated[4].data[0,0])),
-                                            ('I_hat', util.tensor2im(generated[5].data[0,0])),
-                                            ('real_image', util.tensor2im(data['target_rgb'][0,0]))])
-                    visualizer.display_current_results(visuals, epoch, total_steps)
+                                            ('I_hat', util.tensor2im(generated[5].data[0,0]))])
+                    
+                visualizer.display_current_results(visuals, epoch, total_steps)
                 
             ### save latest model
             if total_steps % opt.save_latest_freq == save_delta:
