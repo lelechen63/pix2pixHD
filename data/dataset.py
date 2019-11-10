@@ -362,12 +362,16 @@ class Lmark2rgbLSTMDataset(Dataset):
         similar_frames = torch.zeros(self.lstm_length, 3, self.output_shape[0], self.output_shape[0])
         cropped_similar_image = torch.zeros(self.lstm_length, 3, self.output_shape[0], self.output_shape[0])
         for kk in range(self.lstm_length):
-            reference_rt_diff = reference_rts - rt[start_target_id + kk]
-            reference_rt_diff = np.absolute(reference_rt_diff)
-            r_diff = np.mean(reference_rt_diff, axis =1)
-            similar_id  = np.argmin(r_diff) # input_indexs[np.argmin(r_diff)]
-            similar_frame = reference_frames[similar_id,:3]
-            similar_frames[kk] = similar_frame
+            if not self.opt.no_search:
+                reference_rt_diff = reference_rts - rt[start_target_id + kk]
+                reference_rt_diff = np.absolute(reference_rt_diff)
+                r_diff = np.mean(reference_rt_diff, axis =1)
+                similar_id  = np.argmin(r_diff) # input_indexs[np.argmin(r_diff)]
+                similar_frame = reference_frames[similar_id,:3]
+                similar_frames[kk] = similar_frame
+            else:
+                similar_frame =  reference_frames[0,:3]
+                similar_frames[kk] = similar_frame
 
 
 
@@ -386,15 +390,10 @@ class Lmark2rgbLSTMDataset(Dataset):
             target_ani = self.transform(target_ani)
             target_anis[kk] = target_ani
             cropped_similar_img = similar_frame.clone()
-
             mask = target_ani > -0.9
-            
             mask = scipy.ndimage.morphology.binary_dilation(mask.numpy(),iterations = 5).astype(np.bool)
             cropped_similar_img[torch.tensor(mask)] = -1 
-
             cropped_similar_image[kk] = cropped_similar_img
-
-       
         ############################################################################
 
         input_dic = {'v_id' : v_id, 'target_lmark': target_lmarks, 'reference_frames': reference_frames,

@@ -11,7 +11,7 @@ from torch.nn import functional as F
 import os
 import imp
 from models.vgg import Cropped_VGG19
-from models.def_conv.modules.deform_conv import DeformConv
+# from models.def_conv.modules.deform_conv import DeformConv
 from models.convolutional_rnn import Conv2dGRU
 
 ###############################################################################
@@ -355,26 +355,26 @@ class GlobalGenerator(nn.Module):
         ]
         self.foregroundNet = nn.Sequential(*model)
             
-        if self.deform:
-            self.conv_first =  nn.Sequential(*[nn.ReflectionPad2d(3), nn.Conv2d(6, 64, kernel_size=7, padding=0), norm_layer(64), nn.ReLU(False) ])
-            self.off2d_1 = nn.Sequential(*[  nn.Conv2d(64, 18 * 8, kernel_size=3, stride =1, padding=1), nn.InstanceNorm2d(18 * 8), nn.ReLU(False)])
-            self.def_conv_1 = DeformConv(64, 64, 3,stride =1, padding =1, deformable_groups= 8)
-            self.def_conv_1_norm = nn.Sequential(*[  nn.InstanceNorm2d(64), nn.ReLU(False)])
+        # if self.deform:
+        #     self.conv_first =  nn.Sequential(*[nn.ReflectionPad2d(3), nn.Conv2d(6, 64, kernel_size=7, padding=0), norm_layer(64), nn.ReLU(False) ])
+        #     self.off2d_1 = nn.Sequential(*[  nn.Conv2d(64, 18 * 8, kernel_size=3, stride =1, padding=1), nn.InstanceNorm2d(18 * 8), nn.ReLU(False)])
+        #     self.def_conv_1 = DeformConv(64, 64, 3,stride =1, padding =1, deformable_groups= 8)
+        #     self.def_conv_1_norm = nn.Sequential(*[  nn.InstanceNorm2d(64), nn.ReLU(False)])
 
-            self.off2d_2 = nn.Sequential(*[  nn.Conv2d(64, 18 * 8, kernel_size=3, stride =1, padding=1), nn.InstanceNorm2d(18 * 8), nn.ReLU(False)])
+        #     self.off2d_2 = nn.Sequential(*[  nn.Conv2d(64, 18 * 8, kernel_size=3, stride =1, padding=1), nn.InstanceNorm2d(18 * 8), nn.ReLU(False)])
 
-            self.def_conv_2 = DeformConv(64, 128, 3,stride =1, padding =1, deformable_groups= 8)
-            self.def_conv_2_norm =  nn.Sequential(*[  nn.InstanceNorm2d(128), nn.ReLU(False)])
+        #     self.def_conv_2 = DeformConv(64, 128, 3,stride =1, padding =1, deformable_groups= 8)
+        #     self.def_conv_2_norm =  nn.Sequential(*[  nn.InstanceNorm2d(128), nn.ReLU(False)])
 
-            self.off2d_3 = nn.Sequential(*[  nn.Conv2d(128, 18 * 8, kernel_size=3, stride =1,padding=1), nn.InstanceNorm2d(18 * 8), nn.ReLU(False)])
+        #     self.off2d_3 = nn.Sequential(*[  nn.Conv2d(128, 18 * 8, kernel_size=3, stride =1,padding=1), nn.InstanceNorm2d(18 * 8), nn.ReLU(False)])
 
-            self.def_conv_3 = DeformConv( 128, 64, 3,stride =1, padding =1, deformable_groups= 8)
-            self.def_conv3_norm = nn.Sequential(*[  nn.InstanceNorm2d(64), nn.ReLU(False)])
+        #     self.def_conv_3 = DeformConv( 128, 64, 3,stride =1, padding =1, deformable_groups= 8)
+        #     self.def_conv3_norm = nn.Sequential(*[  nn.InstanceNorm2d(64), nn.ReLU(False)])
 
-            self.conv_lst = Conv2dBlock(64, 3, 7, 1, 3,
-                                   norm='none',
-                                   activation='tanh',
-                                   pad_type=pad_type)
+        #     self.conv_lst = Conv2dBlock(64, 3, 7, 1, 3,
+        #                            norm='none',
+        #                            activation='tanh',
+        #                            pad_type=pad_type)
 
         self.beta  = Conv2dBlock(128, 1, 7, 1, 3,
                                     norm='none',
@@ -383,7 +383,6 @@ class GlobalGenerator(nn.Module):
 
     def forward(self, references, g_in, similar_img, cropped_similar_img):
         dims = references.shape
-
         references = references.reshape( dims[0] * dims[1], dims[2], dims[3], dims[4]  )
         e_vectors = self.embedder(references).reshape(dims[0] , dims[1], -1)
         if self.ft :
@@ -409,28 +408,29 @@ class GlobalGenerator(nn.Module):
         if not self.deform: 
             image = (1- beta) * cropped_similar_img + beta * face_foreground 
             return [image, cropped_similar_img, face_foreground, beta, alpha, I_hat]
-        else:   
-            feature = torch.cat([face_foreground.detach(), cropped_similar_img], 1)
-            fea = self.conv_first(feature)
-            offset_1 = self.off2d_1(fea)
+        # else:   
+        #     # feature = torch.cat([face_foreground.detach(), cropped_similar_img], 1)
+        #     feature  = cropped_similar_img
+        #     fea = self.conv_first(feature)
+        #     offset_1 = self.off2d_1(fea)
 
-            fea = self.def_conv_1(fea, offset_1)
-            fea = self.def_conv_1_norm(fea)
+        #     fea = self.def_conv_1(fea, offset_1)
+        #     fea = self.def_conv_1_norm(fea)
 
-            offset_2 = self.off2d_2(fea)
+        #     offset_2 = self.off2d_2(fea)
 
-            fea = self.def_conv_2(fea, offset_2)
-            fea = self.def_conv_2_norm(fea)
+        #     fea = self.def_conv_2(fea, offset_2)
+        #     fea = self.def_conv_2_norm(fea)
 
-            offset_3 = self.off2d_3(fea)
+        #     offset_3 = self.off2d_3(fea)
             
-            fea = self.def_conv_3(fea, offset_3)
-            background_feature = self.def_conv3_norm(fea)
+        #     fea = self.def_conv_3(fea, offset_3)
+        #     background_feature = self.def_conv3_norm(fea)
 
-            background_img = self.conv_lst(background_feature)
-            image = (1- beta) * background_img + beta * face_foreground
+        #     background_img = self.conv_lst(background_feature)
+        #     image = (1- beta) * background_img + beta * face_foreground
         
-            return [image, background_img, face_foreground, beta, alpha, I_hat]
+        #     return [image, background_img, face_foreground, beta, alpha, I_hat]
 
 
 class GlobalGenerator_lstm(nn.Module):
@@ -566,25 +566,6 @@ class GlobalGenerator_lstm(nn.Module):
         ]
         self.foregroundNet = nn.Sequential(*model)
             
-        if  self.deform:
-            self.conv_first =  nn.Sequential(*[nn.ReflectionPad2d(3), nn.Conv2d(6, 64, kernel_size=7, padding=0), norm_layer(64), nn.ReLU(False) ])
-            self.off2d_1 = nn.Sequential(*[  nn.Conv2d(64, 18 * 8, kernel_size=3, stride =1, padding=1), nn.InstanceNorm2d(18 * 8), nn.ReLU(False)])
-            self.def_conv_1 = DeformConv(64, 64, 3,stride =1, padding =1, deformable_groups= 8)
-            self.def_conv_1_norm = nn.Sequential(*[  nn.InstanceNorm2d(64), nn.ReLU(False)])
-
-            self.off2d_2 = nn.Sequential(*[  nn.Conv2d(64, 18 * 8, kernel_size=3, stride =1, padding=1), nn.InstanceNorm2d(18 * 8), nn.ReLU(False)])
-
-            self.def_conv_2 = DeformConv(64, 128, 3,stride =1, padding =1, deformable_groups= 8)
-            self.def_conv_2_norm =  nn.Sequential(*[  nn.InstanceNorm2d(128), nn.ReLU(False)])
-
-            self.off2d_3 = nn.Sequential(*[  nn.Conv2d(128, 18 * 8, kernel_size=3, stride =1,padding=1), nn.InstanceNorm2d(18 * 8), nn.ReLU(False)])
-
-            self.def_conv_3 = DeformConv( 128, 64, 3,stride =1, padding =1, deformable_groups= 8)
-            self.def_conv3_norm = nn.Sequential(*[  nn.InstanceNorm2d(64), nn.ReLU(False)])
-            self.conv_last = Conv2dBlock(64, 3, 7, 1, 3,
-                                   norm='none',
-                                   activation='tanh',
-                                   pad_type=pad_type)
         self.beta  = Conv2dBlock(128, 1, 7, 1, 3,
                                     norm='none',
                                     activation='sigmoid',
@@ -652,26 +633,26 @@ class GlobalGenerator_lstm(nn.Module):
                 if not self.deform:
                     image = (1- beta) * cropped_similar_img_t + beta * face_foreground 
                     outputs.append(image)
-                else:
-                    feature = torch.cat([face_foreground, cropped_similar_img_t], 1)
-                    fea = self.conv_first(feature)
-                    offset_1 = self.off2d_1(fea)
+        #         else:
+        #             feature = torch.cat([face_foreground, cropped_similar_img_t], 1)
+        #             fea = self.conv_first(feature)
+        #             offset_1 = self.off2d_1(fea)
 
-                    fea = self.def_conv_1(fea, offset_1)
-                    fea = self.def_conv_1_norm(fea)
+        #             fea = self.def_conv_1(fea, offset_1)
+        #             fea = self.def_conv_1_norm(fea)
 
-                    offset_2 = self.off2d_2(fea)
+        #             offset_2 = self.off2d_2(fea)
 
-                    fea = self.def_conv_2(fea, offset_2)
-                    fea = self.def_conv_2_norm(fea)
+        #             fea = self.def_conv_2(fea, offset_2)
+        #             fea = self.def_conv_2_norm(fea)
 
-                    offset_3 = self.off2d_3(fea)
+        #             offset_3 = self.off2d_3(fea)
                     
-                    fea = self.def_conv_3(fea, offset_3)
-                    background_feature = self.def_conv3_norm(fea)
-                    background_img = self.conv_lst(background_feature)
-                    image = (1- beta) * background_img + beta * face_foreground
-                    outputs.append(image)
+        #             fea = self.def_conv_3(fea, offset_3)
+        #             background_feature = self.def_conv3_norm(fea)
+        #             background_img = self.conv_lst(background_feature)
+        #             image = (1- beta) * background_img + beta * face_foreground
+        #             outputs.append(image)
         
         return [torch.stack(outputs, dim = 1) ,cropped_similar_img, \
             torch.stack(face_foregrounds, dim = 1), torch.stack(betas, dim = 1), torch.stack(alphas, dim = 1) \
