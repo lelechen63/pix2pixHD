@@ -85,8 +85,8 @@ with torch.autograd.set_detect_anomaly(False):
             loss_D.backward()
             model.module.optimizer_D.step()
 
-            #call(["nvidia-smi", "--format=csv", "--query-gpu=memory.used,memory.free"]) 
-
+            print (len(generated))
+            print ('+++++++')
             ############## Display results and errors ##########
             ### print out errors
             # print   (loss_dict['D_fake'], loss_dict['D_real'],  loss_dict['G_GAN'],  loss_dict.get('G_GAN_Feat',0),  loss_dict.get('G_VGG',0)) 
