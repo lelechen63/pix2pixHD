@@ -601,8 +601,6 @@ class GlobalGenerator_lstm(nn.Module):
             for step_t in range(g_in.shape[1]):
                 feature_t = feature_list[:, step_t,:,:,:]
                 outputs.append(self.decoder(feature_t))
-            print ('*******')
-            print (len(outputs))
             return [torch.stack(outputs, dim = 1)]
         else:
             outputs = []
