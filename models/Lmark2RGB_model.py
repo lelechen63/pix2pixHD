@@ -187,8 +187,6 @@ class Lmark2RGBModel1(BaseModel):
         img_dims = fake_image.shape
 
         if self.use_lstm:
-            print (g_dims)
-            print (img_dims)
             g_in = g_in.reshape(g_dims[0] * g_dims[1], g_dims[2], g_dims[3], g_dims[4])
 
             fake_image = fake_image.reshape(img_dims[0] * img_dims[1], img_dims[2], img_dims[3], img_dims[4])
