@@ -48,8 +48,17 @@ class Lmark2rgbDataset(Dataset):
             # self.data = pkl.load(_file)
             self.data = pkl._Unpickler(_file)
             self.data.encoding = 'latin1'
-            self.data = self.data.load()[1:]
+            self.data = self.data.load()
             _file.close()
+        elif opt.demo:
+
+            _file = open(os.path.join(self.root, 'txt', "demo.pkl"), "rb")
+            self.data = pkl._Unpickler(_file)
+            self.data.encoding = 'latin1'
+            self.data = self.data.load()
+            # self.data = pkl.load(_file)
+            _file.close()
+
         else:
             _file = open(os.path.join(self.root, 'txt', "front_rt2.pkl"), "rb")
             self.data = pkl._Unpickler(_file)
@@ -75,7 +84,6 @@ class Lmark2rgbDataset(Dataset):
     def __getitem__(self, index):
         # try:
             v_id = self.data[index][0]
-            reference_id = self.data[index][1]
             video_path = os.path.join(self.root, 'unzip', v_id + '.mp4')
             ani_video_path = os.path.join(self.root, 'unzip', v_id + '_ani.mp4')
             rt_path = os.path.join(self.root, 'unzip', v_id + '_sRT.npy')
@@ -95,7 +103,6 @@ class Lmark2rgbDataset(Dataset):
                 if self.num_frames  ==1 :
                     input_indexs = [0]
                     target_id = 0
-                    reference_id = 0
                 elif self.num_frames == 8:
                     input_indexs = [0,7,15,23,31,39,47,55]
                     target_id =  random.sample(input_indexs, 1)
@@ -141,8 +148,6 @@ class Lmark2rgbDataset(Dataset):
             
             ############################################################################
             target_rgb = real_video[target_id]
-            reference_rgb = real_video[reference_id]
-            reference_ani = ani_video[reference_id]
             target_ani = ani_video[target_id]
             target_lmark = lmark[target_id]
 
@@ -208,7 +213,6 @@ class Voxceleb_audio_lmark_single(Dataset):
         self.consider_key = [1,2,3,4,5,11,12,13,14,15,27,28,29,30,31,32,33,34,35,39,42,36,45,17,21,22,26]
     def __getitem__(self, index):
         v_id = self.data[index][0]
-        reference_id = self.data[index][1]
         lmark_path = os.path.join(self.root, 'unzip', v_id + '_front.npy')
 
         audio_path  = os.path.join(self.root, 'unzip', v_id.replace('_video', '_audio') + '.npy')
@@ -290,6 +294,14 @@ class Lmark2rgbLSTMDataset(Dataset):
             self.data.encoding = 'latin1'
             self.data = self.data.load()
             _file.close()
+        elif opt.demo:
+            _file = open(os.path.join(self.root, 'txt', "demo.pkl"), "rb")
+            self.data = pkl._Unpickler(_file)
+            self.data.encoding = 'latin1'
+            self.data = self.data.load()
+            # self.data = pkl.load(_file)
+            _file.close()
+
         else:
             _file = open(os.path.join(self.root, 'txt', "front_rt2.pkl"), "rb")
             self.data = pkl._Unpickler(_file)
@@ -313,7 +325,6 @@ class Lmark2rgbLSTMDataset(Dataset):
 
     def __getitem__(self, index):
         v_id = self.data[index][0]
-        reference_id = self.data[index][1]
         video_path = os.path.join(self.root, 'unzip', v_id + '.mp4')
         ani_video_path = os.path.join(self.root, 'unzip', v_id + '_ani.mp4')
         rt_path = os.path.join(self.root, 'unzip', v_id + '_sRT.npy')
@@ -372,8 +383,6 @@ class Lmark2rgbLSTMDataset(Dataset):
             else:
                 similar_frame =  reference_frames[0,:3]
                 similar_frames[kk] = similar_frame
-
-
 
             target_lmark = plot_landmarks( lmark[start_target_id + kk])
             target_lmark  = cv2.resize(target_lmark, self.output_shape)
