@@ -176,10 +176,6 @@ class Lmark2RGBModel1(BaseModel):
         real_image = real_image,similar_frame = similar_frame,cropped_similar_img = cropped_similar_img,infer= infer)  
 
         # Fake Generation
-        print (references.shape)
-        print (g_in.shape)
-        print (similar_frame.shape)
-        print (cropped_similar_img.shape)
         fake_list = self.netG.forward(references, g_in , similar_frame, cropped_similar_img)
         # if self.attention:
         fake_image = fake_list[0]
