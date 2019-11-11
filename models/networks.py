@@ -630,7 +630,8 @@ class GlobalGenerator_lstm(nn.Module):
                 forMask_feature_t = torch.cat([foreground_feature_t, I_feature_t ], 1)
                 beta = self.beta(forMask_feature_t)
                 betas.append(beta)
-                
+                image = (1- beta) * cropped_similar_img_t + beta * face_foreground 
+                outputs.append(image)
       
         return [torch.stack(outputs, dim = 1) ,cropped_similar_img, \
             torch.stack(face_foregrounds, dim = 1), torch.stack(betas, dim = 1), torch.stack(alphas, dim = 1) \
