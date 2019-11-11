@@ -118,7 +118,6 @@ with torch.autograd.set_detect_anomaly(False):
                                         ('alpha', util.tensor2im(generated[4].data[0])),
                                         ('I_hat', util.tensor2im(generated[5].data[0]))])
                     
-                    visuals = OrderedDict(tmp)
                 else:
                     tmp = []
                     tmp.extend([( 'reference1', util.tensor2im(data['reference_frames'][0, 0,:3]))])
@@ -136,8 +135,8 @@ with torch.autograd.set_detect_anomaly(False):
                                                 ('beta', util.tensor2im(generated[3].data[0,0])),
                                                 ('alpha', util.tensor2im(generated[4].data[0,0])),
                                                 ('I_hat', util.tensor2im(generated[5].data[0,0]))])
-                        
-                    visualizer.display_current_results(visuals, epoch, total_steps)
+                visuals =  OrderedDict(tmp)  
+                visualizer.display_current_results(visuals, epoch, total_steps)
                 
             ### save latest model
             if total_steps % opt.save_latest_freq == save_delta:
