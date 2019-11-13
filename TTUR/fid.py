@@ -295,7 +295,7 @@ def _handle_path_fake(path, sess, low_profile=False):
         f.close()
     else:
         path = pathlib.Path(path)
-        files = list(path.glob('*synthesized_image.jpg')) + list(path.glob('*synthesized_image.png'))
+        files = list(path.glob('*synthesized_image*.jpg')) + list(path.glob('*synthesized_image*.png'))
         files.sort()
         if low_profile:
             m, s = calculate_activation_statistics_from_files(files, sess)
@@ -312,7 +312,7 @@ def _handle_path_real(path, sess, low_profile=False):
         f.close()
     else:
         path = pathlib.Path(path)
-        files = list(path.glob('*real_image.jpg')) + list(path.glob('*real_image.png'))
+        files = list(path.glob('*real_image*.jpg')) + list(path.glob('*real_image*.png'))
         files.sort()
         if low_profile:
             m, s = calculate_activation_statistics_from_files(files, sess)
@@ -326,7 +326,7 @@ def _handle_path_real(path, sess, low_profile=False):
 
 def compare_ssim(path):
     path = pathlib.Path(path)
-    files = list(path.glob('*real_image.jpg')) + list(path.glob('*real_image.png'))
+    files = list(path.glob('*real_image*.jpg')) + list(path.glob('*real_image*.png'))
     files.sort()
     dis_txt = open( os.path.join( os.path.dirname(path),  'ssim.txt')  ,'w')
     ssims = []
@@ -350,6 +350,8 @@ def compare_ssim(path):
         f_i = cv2.cvtColor(f_i, cv2.COLOR_RGB2GRAY)
         r_i = cv2.cvtColor(r_i, cv2.COLOR_RGB2GRAY)
         psnr = psnr_f(f_i,r_i)
+        # if ssim < 0.6:
+        #     continue
         psnrs.append(psnr)
         ssims.append(ssim)
         dis_txt.write(fake_path + "\t ssim: {:.4f},\t psnr: {:.4f}".format( ssim, psnr) + '\n') 
