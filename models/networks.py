@@ -789,7 +789,7 @@ class GlobalGenerator_lstm_2(nn.Module):
 
         lstm_output, _ = self.lstm(feature_list, hidden)
         print (lstm_output.shape)
-        lstm_output = torch.unsqueeze(3).unsqueeze(4).repeat(1, 1, 1,4,4))
+        lstm_output = torch.unsqueeze(3).unsqueeze(4).repeat(1, 1, 1,4,4)
 
         adain_params = self.mlp(e_hat)
 
