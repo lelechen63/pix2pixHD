@@ -408,30 +408,7 @@ class GlobalGenerator(nn.Module):
         if not self.deform: 
             image = (1- beta) * cropped_similar_img + beta * face_foreground 
             return [image, cropped_similar_img, face_foreground, beta, alpha, I_hat]
-        # else:   
-        #     # feature = torch.cat([face_foreground.detach(), cropped_similar_img], 1)
-        #     feature  = cropped_similar_img
-        #     fea = self.conv_first(feature)
-        #     offset_1 = self.off2d_1(fea)
-
-        #     fea = self.def_conv_1(fea, offset_1)
-        #     fea = self.def_conv_1_norm(fea)
-
-        #     offset_2 = self.off2d_2(fea)
-
-        #     fea = self.def_conv_2(fea, offset_2)
-        #     fea = self.def_conv_2_norm(fea)
-
-        #     offset_3 = self.off2d_3(fea)
-            
-        #     fea = self.def_conv_3(fea, offset_3)
-        #     background_feature = self.def_conv3_norm(fea)
-
-        #     background_img = self.conv_lst(background_feature)
-        #     image = (1- beta) * background_img + beta * face_foreground
-        
-        #     return [image, background_img, face_foreground, beta, alpha, I_hat]
-
+      
 
 class GlobalGenerator_lstm(nn.Module):
     def __init__(self,input_nc, output_nc, pad_type='reflect', norm_layer=nn.InstanceNorm2d, ngf = 64, opt = None):
@@ -609,7 +586,7 @@ class GlobalGenerator_lstm(nn.Module):
             face_foregrounds = []
             I_hats = []
             for step_t in range(g_in.shape[1]):
-                feature_t = feature_list[:, step_t,:,:,:]
+                feature_t = lstm_output[:, step_t,:,:,:]
                 ani_img_t = g_in[:,step_t,3:,:,:]
                 similar_img_t = similar_img[:,step_t,:,:,:]
 
@@ -637,6 +614,226 @@ class GlobalGenerator_lstm(nn.Module):
             torch.stack(face_foregrounds, dim = 1), torch.stack(betas, dim = 1), torch.stack(alphas, dim = 1) \
                 , torch.stack(I_hats, dim = 1)]
 
+
+class GlobalGenerator_lstm_2(nn.Module):
+    def __init__(self,input_nc, output_nc, pad_type='reflect', norm_layer=nn.InstanceNorm2d, ngf = 64, opt = None):
+        super(GlobalGenerator_lstm_2, self).__init__()        
+        activ = 'relu'    
+        
+        self.deform = opt.use_deform
+        self.ft = opt.use_ft
+        self.attention =  not opt.no_att
+        self.ft_freeze = opt.ft_freeze
+        model = [nn.ReflectionPad2d(3), nn.Conv2d(input_nc, ngf, kernel_size=7, padding=0), norm_layer(ngf), nn.ReLU(True) ]
+        ### downsample
+        model += [Conv2dBlock(64, 128, 4, 2, 1,           # 128, 128, 128 
+                                       norm= 'in',
+                                       activation=activ,
+                                       pad_type=pad_type)]
+
+        model += [Conv2dBlock(128, 128, 4, 2, 1,           # 128, 64 
+                                       norm= 'in',
+                                       activation=activ,
+                                       pad_type=pad_type)]
+        model += [Conv2dBlock(128, 256, 4, 2, 1,           # 256 32 
+                                       norm= 'in',
+                                       activation=activ,
+                                       pad_type=pad_type)]
+
+        model += [Conv2dBlock(256, 256, 4, 2, 1,           # 256 16
+                                       norm= 'in',
+                                       activation=activ,
+                                       pad_type=pad_type)]
+        model += [Conv2dBlock(256, 512, 4, 2, 1,           # 512 8
+                                       norm= 'in',
+                                       activation=activ,
+                                       pad_type=pad_type)]
+
+        model += [Conv2dBlock(512, 512, 4, 2, 1,           # 512 4
+                                       norm= 'in',
+                                       activation=activ,
+                                       pad_type=pad_type)]
+
+
+        
+        ###  adain resnet blocks
+        model += [ResBlocks(2, 512, norm  = 'adain', activation=activ, pad_type='reflect')]
+        
+
+        self.lmark_ani_encoder = nn.Sequential(*model)
+        
+        self.mlp0 = MLP(512,
+                       get_num_adain_params(self.lmark_ani_encoder),
+                       256,
+                       3,
+                       norm='none',
+                       activ='relu')
+
+        model  = []
+        self.pooling1 = nn.AdaptiveAvgPool2d(1)
+
+        self.lstm = nn.LSTM(input_size = 512, hidden_size = 256, 3, batch_first = True) 
+        model = []
+        model += [Conv2dBlock(256, 512, 3, 1, 1,           # 512 4
+                                       norm= 'in',
+                                       activation=activ,
+                                       pad_type=pad_type)]
+        model += [ResBlocks(2, 512, norm  = 'adain', activation=activ, pad_type='reflect')]
+
+        ### upsample         
+        model += [nn.Upsample(scale_factor=2),
+                        Conv2dBlock(512, 512, 5, 1, 2,
+                                    norm='in',
+                                    activation=activ,
+                                    pad_type=pad_type)]    # 512, 8 , 8 
+        model += [nn.Upsample(scale_factor=2),
+                        Conv2dBlock(512, 512, 5, 1, 2,
+                                    norm='in',
+                                    activation=activ,
+                                    pad_type=pad_type)] # 512, 16 , 16 
+        model += [nn.Upsample(scale_factor=2),
+                        Conv2dBlock(512, 256, 5, 1, 2,
+                                    norm='in',
+                                    activation=activ,
+                                    pad_type=pad_type)] # 256, 32, 32 
+        model += [nn.Upsample(scale_factor=2),
+                        Conv2dBlock(256, 256, 5, 1, 2,
+                                    norm='in',
+                                    activation=activ,
+                                    pad_type=pad_type)] # 256, 64, 64 
+        model += [nn.Upsample(scale_factor=2), 
+                        Conv2dBlock(256, 128, 5, 1, 2,
+                                    norm='in',
+                                    activation=activ,
+                                    pad_type=pad_type)]  # 128, 128, 128 
+        model += [nn.Upsample(scale_factor=2), 
+                        Conv2dBlock(128, 64, 5, 1, 2,
+                                    norm='in',
+                                    activation=activ,
+                                    pad_type=pad_type)]  # 64, 256, 256 
+        if not self.attention:
+            model += [Conv2dBlock(64, 3, 7, 1, 3,
+                                   norm='none',
+                                   activation='tanh',
+                                   pad_type=pad_type)]
+
+            self.decoder = nn.Sequential(*model)
+        else:
+            self.decoder = nn.Sequential(*model)
+
+        self.alpha_conv = Conv2dBlock(64, 1, 7, 1, 3,
+                                   norm='none',
+                                   activation='sigmoid',
+                                   pad_type=pad_type)
+
+        
+
+        self.rgb_conv = Conv2dBlock(64, 3, 7, 1, 3,
+                                   norm='none',
+                                   activation='tanh',
+                                   pad_type=pad_type)
+    
+        self.embedder = Embedder()
+        self.mlp = MLP(512,
+                       get_num_adain_params(self.decoder),
+                       256,
+                       3,
+                       norm='none',
+                       activ='relu')
+        
+        
+    
+        model = [nn.ReflectionPad2d(3), nn.Conv2d(6, 32, kernel_size=7, padding=0), norm_layer(32), nn.ReLU(True) ]
+        ### downsample
+        model += [Conv2dBlock(32, 64, 4, 2, 1,           # 128, 128, 128 
+                                    norm= 'in',
+                                    activation=activ,
+                                    pad_type=pad_type)]
+
+        model += [nn.ConvTranspose2d(64, 64,kernel_size=4, stride=(2),padding=(1)),
+                    nn.InstanceNorm2d(64),
+                    nn.ReLU(True)
+        ]
+        self.foregroundNet = nn.Sequential(*model)
+            
+        self.beta  = Conv2dBlock(128, 1, 7, 1, 3,
+                                    norm='none',
+                                    activation='sigmoid',
+                                    pad_type=pad_type)
+
+    def forward(self, references, g_in, similar_img, cropped_similar_img):
+        dims = references.shape
+
+        hidden = ( torch.autograd.Variable(torch.zeros(3, audio.size(0), 256).cuda()),
+                      torch.autograd.Variable(torch.zeros(3, audio.size(0), 256).cuda()))
+
+        references = references.reshape( dims[0] * dims[1], dims[2], dims[3], dims[4]  )
+        e_vectors = self.embedder(references).reshape(dims[0] , dims[1], -1)
+        if self.ft :
+            if self.ft_freeze:
+                e_vectors = e_vectors.detach()
+        e_hat = e_vectors.mean(dim = 1)
+        adain_params0 = self.mlp0(e_hat)
+        assign_adain_params(adain_params0, self.lmark_ani_encoder)
+        feature_list = list()
+        for step_t in range(g_in.shape[1]):
+            g_in_t = g_in[:,step_t,:,:,:]
+            g_in_t.data = g_in_t.data.contiguous()
+            
+            feature = self.lmark_ani_encoder(g_in_t)
+            feature = self.pooling1(feature)
+            feature_list.append(feature)
+
+        feature_list =torch.stack(feature_list, dim = 1)
+        print (feature_list.shape)
+
+        lstm_output, _ = self.lstm(feature_list, hidden)
+        print (lstm_output.shape)
+        lstm_output = torch.unsqueeze(3).unsqueeze(4).repeat(1, 1, 1,4,4))
+
+        adain_params = self.mlp(e_hat)
+
+        assign_adain_params(adain_params, self.decoder)
+        if not self.attention:
+            outputs = []
+            for step_t in range(g_in.shape[1]):
+                feature_t = feature_list[:, step_t,:,:,:]
+                outputs.append(self.decoder(feature_t))
+            return [torch.stack(outputs, dim = 1)]
+        else:
+            outputs = []
+            alphas  = []
+            betas = []
+            face_foregrounds = []
+            I_hats = []
+            for step_t in range(g_in.shape[1]):
+                feature_t = feature_list[:, step_t,:,:,:]
+                ani_img_t = g_in[:,step_t,3:,:,:]
+                similar_img_t = similar_img[:,step_t,:,:,:]
+
+                cropped_similar_img_t =  cropped_similar_img[:,step_t,:,:,:]
+                similar_img_t.data = similar_img_t.data.contiguous()
+
+                ani_img_t.data = ani_img_t.data.contiguous()
+
+                I_feature_t =  self.decoder(feature_t)
+                I_hat_t = self.rgb_conv(I_feature_t)
+                I_hats.append(I_hat_t)    
+
+                alpha_t = self.alpha_conv(I_feature_t)
+                alphas.append(alpha_t)
+                face_foreground = (1 - alpha_t) * ani_img_t + alpha_t * I_hat_t
+                face_foregrounds.append(face_foreground)
+                foreground_feature_t = self.foregroundNet( torch.cat([ani_img_t, similar_img_t], 1) ) 
+                forMask_feature_t = torch.cat([foreground_feature_t, I_feature_t ], 1)
+                beta = self.beta(forMask_feature_t)
+                betas.append(beta)
+                image = (1- beta) * cropped_similar_img_t + beta * face_foreground 
+                outputs.append(image)
+      
+        return [torch.stack(outputs, dim = 1) ,cropped_similar_img, \
+            torch.stack(face_foregrounds, dim = 1), torch.stack(betas, dim = 1), torch.stack(alphas, dim = 1) \
+                , torch.stack(I_hats, dim = 1)]
 
 
 class MultiscaleDiscriminator(nn.Module):
