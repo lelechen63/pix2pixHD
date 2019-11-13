@@ -56,6 +56,7 @@ class BaseOptions():
         self.parser.add_argument('--use_ft', action='store_true', help='use few shot to fine-tune')
         self.parser.add_argument('--ft_freeze', action='store_true', help='use few shot to fine-tune')
         self.parser.add_argument('--no_search', action='store_true', help='use few shot to fine-tune')
+        self.parser.add_argument('--no_convLSTM', action='store_true', help='use few shot to fine-tune')
 
 
 

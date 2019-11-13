@@ -42,7 +42,10 @@ def define_G(input_nc, output_nc, netG, pad_type,  norm='instance',ngf= 64, opt 
         if opt.use_lstm == False:    
             netG = GlobalGenerator( input_nc, output_nc, pad_type, norm_layer,ngf, opt)       
         else:
-            netG = GlobalGenerator_lstm( input_nc, output_nc, pad_type, norm_layer ,ngf, opt)
+            if opt.no_convLSTM:
+                netG = GlobalGenerator_lstm_2( input_nc, output_nc, pad_type, norm_layer ,ngf, opt)
+            else:
+                netG = GlobalGenerator_lstm( input_nc, output_nc, pad_type, norm_layer ,ngf, opt)
     elif netG == 'local':        
         netG = LocalEnhancer(input_nc, output_nc, ngf, n_downsample_global, n_blocks_global, 
                                   n_local_enhancers, n_blocks_local, norm_layer)
