@@ -797,7 +797,7 @@ class GlobalGenerator_lstm_2(nn.Module):
         if not self.attention:
             outputs = []
             for step_t in range(g_in.shape[1]):
-                feature_t = feature_list[:, step_t,:,:,:]
+                feature_t = lstm_output[:, step_t,:,:,:]
                 outputs.append(self.decoder(feature_t))
             return [torch.stack(outputs, dim = 1)]
         else:
