@@ -672,7 +672,7 @@ class GlobalGenerator_lstm_2(nn.Module):
         model  = []
         self.pooling1 = nn.AdaptiveAvgPool2d(1)
 
-        self.lstm = nn.LSTM(input_size = 512, hidden_size = 256, 3, batch_first = True) 
+        self.lstm = nn.LSTM(input_size = 512, hidden_size = 256, num_layers=  3, batch_first = True) 
         model = []
         model += [Conv2dBlock(256, 512, 3, 1, 1,           # 512 4
                                        norm= 'in',
