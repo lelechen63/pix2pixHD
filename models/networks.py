@@ -506,22 +506,31 @@ class GlobalGenerator2(nn.Module):
                                     pad_type=pad_type)]
 
         model += [ResBlocks(2, 64, norm  = 'in', activation=activ, pad_type='reflect')]
+        
+        
         model += [Conv2dBlock(64, 128, 4, 2, 1,           # 128, 128, 128 
                                     norm= 'in',
                                     activation=activ,
                                     pad_type=pad_type)]
-        
-        model += [Conv2dBlock(128, 256, 4, 2, 1,           # 128, 128, 128 
-                                    norm= 'in',
-                                    activation=activ,
-                                    pad_type=pad_type)]
+        model += [ResBlocks(2, 128, norm  = 'in', activation=activ, pad_type='reflect')]
+
+        # model += [Conv2dBlock(128, 256, 4, 1, 1,           # 128, 128, 128 
+        #                             norm= 'in',
+        #                             activation=activ,
+        #                             pad_type=pad_type)]
         model += [nn.ConvTranspose2d(256, 128,kernel_size=4, stride=(2),padding=(1)),
                     nn.InstanceNorm2d(128),
                     nn.ReLU(True)
         ]
         model += [ResBlocks(2, 128, norm  = 'in', activation=activ, pad_type='reflect')]
+        
+        model += [nn.ConvTranspose2d(128, 64,kernel_size=4, stride=(2),padding=(1)),
+                    nn.InstanceNorm2d(64),
+                    nn.ReLU(True)
+        ]
+        model += [ResBlocks(2, 64, norm  = 'in', activation=activ, pad_type='reflect')]
 
-        model +=[Conv2dBlock(128, 3, 7, 1, 3,
+        model +=[Conv2dBlock(64, 3, 7, 1, 3,
                                     norm='none',
                                     activation='tanh',
                                     pad_type=pad_type)]
