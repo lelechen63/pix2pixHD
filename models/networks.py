@@ -518,7 +518,7 @@ class GlobalGenerator2(nn.Module):
         #                             norm= 'in',
         #                             activation=activ,
         #                             pad_type=pad_type)]
-        model += [nn.ConvTranspose2d(256, 128,kernel_size=4, stride=(2),padding=(1)),
+        model += [nn.ConvTranspose2d(128, 128,kernel_size=4, stride=(2),padding=(1)),
                     nn.InstanceNorm2d(128),
                     nn.ReLU(True)
         ]
