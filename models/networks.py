@@ -555,7 +555,8 @@ class GlobalGenerator2(nn.Module):
         alpha = self.alpha_conv(I_feature)
         face_foreground = (1 - alpha) * ani_img + alpha * I_hat
         image = self.foregroundNet( torch.cat([face_foreground, cropped_similar_img], 1) ) 
-     
+        print (image.shape)
+        print('+++++')
         return [image, cropped_similar_img, face_foreground, alpha, alpha, I_hat]
 
 class GlobalGenerator_lstm(nn.Module):
