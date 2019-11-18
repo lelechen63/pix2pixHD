@@ -41,7 +41,7 @@ def define_G(input_nc, output_nc, netG, pad_type,  norm='instance',ngf= 64, opt 
     if netG == 'global':
         if opt.use_lstm == False:    
             if opt.no_beta:
-                netG = GlobalGenerator2( input_nc, output_nc, pad_type, norm_layer,ngf, opt)  
+                netG = GlobalGenerator3( input_nc, output_nc, pad_type, norm_layer,ngf, opt)  
             else:
                 netG = GlobalGenerator( input_nc, output_nc, pad_type, norm_layer,ngf, opt)       
         else:
@@ -565,6 +565,179 @@ class GlobalGenerator2(nn.Module):
         face_foreground = (1 - alpha) * ani_img + alpha * I_hat
         image = self.foregroundNet( torch.cat([face_foreground, cropped_similar_img], 1) ) 
         return [image, cropped_similar_img, face_foreground, alpha, alpha, I_hat]
+
+
+class GlobalGenerator3(nn.Module):
+    def __init__(self,input_nc, output_nc, pad_type='reflect', norm_layer=nn.BatchNorm2d, ngf = 64, opt = None):
+        super(GlobalGenerator3, self).__init__()        
+        activ = 'relu'    
+        self.deform = opt.use_deform
+        self.ft = opt.use_ft
+        self.attention =  not opt.no_att
+        self.ft_freeze = opt.ft_freeze
+        model = [nn.ReflectionPad2d(3), nn.Conv2d(input_nc + 3, ngf, kernel_size=7, padding=0), norm_layer(ngf), nn.ReLU(True) ]
+        ### downsample
+        model += [Conv2dBlock(64, 128, 4, 2, 1,           # 128, 128, 128 
+                                       norm= 'in',
+                                       activation=activ,
+                                       pad_type=pad_type)]
+
+        model += [Conv2dBlock(128, 128, 4, 2, 1,           # 128, 64 
+                                       norm= 'in',
+                                       activation=activ,
+                                       pad_type=pad_type)]
+        model += [Conv2dBlock(128, 256, 4, 2, 1,           # 256 32 
+                                       norm= 'in',
+                                       activation=activ,
+                                       pad_type=pad_type)]
+
+        model += [Conv2dBlock(256, 256, 4, 2, 1,           # 256 16
+                                       norm= 'in',
+                                       activation=activ,
+                                       pad_type=pad_type)]
+        model += [Conv2dBlock(256, 512, 4, 2, 1,           # 512 8
+                                       norm= 'in',
+                                       activation=activ,
+                                       pad_type=pad_type)]
+
+        model += [Conv2dBlock(512, 512, 4, 2, 1,           # 512 4
+                                       norm= 'in',
+                                       activation=activ,
+                                       pad_type=pad_type)]
+
+
+        self.lmark_ani_encoder = nn.Sequential(*model)
+        model = []
+        ###  adain resnet blocks
+        model += [ResBlocks(2, 512, norm  = 'adain', activation=activ, pad_type='reflect')]
+
+        ### upsample         
+        model += [nn.Upsample(scale_factor=2),
+                        Conv2dBlock(512, 512, 5, 1, 2,
+                                    norm='in',
+                                    activation=activ,
+                                    pad_type=pad_type)]    # 512, 8 , 8 
+        model += [nn.Upsample(scale_factor=2),
+                        Conv2dBlock(512, 512, 5, 1, 2,
+                                    norm='in',
+                                    activation=activ,
+                                    pad_type=pad_type)] # 512, 16 , 16 
+        model += [nn.Upsample(scale_factor=2),
+                        Conv2dBlock(512, 256, 5, 1, 2,
+                                    norm='in',
+                                    activation=activ,
+                                    pad_type=pad_type)] # 256, 32, 32 
+        model += [nn.Upsample(scale_factor=2),
+                        Conv2dBlock(256, 256, 5, 1, 2,
+                                    norm='in',
+                                    activation=activ,
+                                    pad_type=pad_type)] # 256, 64, 64 
+        model += [nn.Upsample(scale_factor=2), 
+                        Conv2dBlock(256, 128, 5, 1, 2,
+                                    norm='in',
+                                    activation=activ,
+                                    pad_type=pad_type)]  # 128, 128, 128 
+        model += [nn.Upsample(scale_factor=2), 
+                        Conv2dBlock(128, 64, 5, 1, 2,
+                                    norm='in',
+                                    activation=activ,
+                                    pad_type=pad_type)]  # 64, 256, 256 
+        if not self.attention:
+            model += [Conv2dBlock(64, 3, 7, 1, 3,
+                                   norm='none',
+                                   activation='tanh',
+                                   pad_type=pad_type)]
+
+            self.decoder = nn.Sequential(*model)
+        else:
+            self.decoder = nn.Sequential(*model)
+
+        self.alpha_conv = Conv2dBlock(64, 1, 7, 1, 3,
+                                   norm='none',
+                                   activation='sigmoid',
+                                   pad_type=pad_type)
+
+        self.rgb_conv = Conv2dBlock(64, 3, 7, 1, 3,
+                                   norm='none',
+                                   activation='tanh',
+                                   pad_type=pad_type)
+    
+        self.embedder = Embedder()
+        self.mlp = MLP(512,
+                       get_num_adain_params(self.decoder),
+                       256,
+                       3,
+                       norm='none',
+                       activ='relu')
+        
+        # model = [nn.ReflectionPad2d(3), nn.Conv2d(6, 32, kernel_size=7, padding=0), norm_layer(32), nn.ReLU(True) ]
+        # ### downsample
+        # model += [Conv2dBlock(32, 64, 4, 2, 1,           # 128, 128, 128 
+        #                             norm= 'in',
+        #                             activation=activ,
+        #                             pad_type=pad_type)]
+
+        # model += [ResBlocks(2, 64, norm  = 'in', activation=activ, pad_type='reflect')]
+        
+        
+        # model += [Conv2dBlock(64, 128, 4, 2, 1,           # 128, 128, 128 
+        #                             norm= 'in',
+        #                             activation=activ,
+        #                             pad_type=pad_type)]
+        # model += [ResBlocks(2, 128, norm  = 'in', activation=activ, pad_type='reflect')]
+
+        # # model += [Conv2dBlock(128, 256, 4, 1, 1,           # 128, 128, 128 
+        # #                             norm= 'in',
+        # #                             activation=activ,
+        # #                             pad_type=pad_type)]
+        # model += [nn.ConvTranspose2d(128, 128,kernel_size=4, stride=(2),padding=(1)),
+        #             nn.InstanceNorm2d(128),
+        #             nn.ReLU(True)
+        # ]
+        # model += [ResBlocks(2, 128, norm  = 'in', activation=activ, pad_type='reflect')]
+        
+        # model += [nn.ConvTranspose2d(128, 64,kernel_size=4, stride=(2),padding=(1)),
+        #             nn.InstanceNorm2d(64),
+        #             nn.ReLU(True)
+        # ]
+        # model += [ResBlocks(2, 64, norm  = 'in', activation=activ, pad_type='reflect')]
+
+        # model +=[Conv2dBlock(64, 3, 7, 1, 3,
+        #                             norm='none',
+        #                             activation='tanh',
+        #                             pad_type=pad_type)]
+        
+        # self.foregroundNet = nn.Sequential(*model)
+        
+        # self.beta  = Conv2dBlock(128, 1, 7, 1, 3,
+        #                             norm='none',
+        #                             activation='tanh',
+        #                             pad_type=pad_type)
+
+    def forward(self, references, g_in, similar_img, cropped_similar_img):
+        dims = references.shape
+        references = references.reshape( dims[0] * dims[1], dims[2], dims[3], dims[4]  )
+        e_vectors = self.embedder(references).reshape(dims[0] , dims[1], -1)
+        if self.ft :
+            if self.ft_freeze:
+                e_vectors = e_vectors.detach()
+        e_hat = e_vectors.mean(dim = 1)
+
+        feature = self.lmark_ani_encoder( torch.cat(g_in, cropped_similar_img))
+        # Decode
+        adain_params = self.mlp(e_hat)
+        assign_adain_params(adain_params, self.decoder)
+        if not self.attention:
+            return [self.decoder(feature)]
+        I_feature = self.decoder(feature)
+
+        I_hat = self.rgb_conv(I_feature)        
+        ani_img = g_in[:,3:,:,:]
+        ani_img.data = ani_img.data.contiguous()
+        alpha = self.alpha_conv(I_feature)
+        face_foreground = (1 - alpha) * ani_img + alpha * I_hat
+        # image = self.foregroundNet( torch.cat([face_foreground, cropped_similar_img], 1) ) 
+        return [face_foreground, cropped_similar_img, I_hat, alpha, alpha, I_hat]
 
 class GlobalGenerator_lstm(nn.Module):
     def __init__(self,input_nc, output_nc, pad_type='reflect', norm_layer=nn.InstanceNorm2d, ngf = 64, opt = None):
