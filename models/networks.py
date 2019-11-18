@@ -723,7 +723,7 @@ class GlobalGenerator3(nn.Module):
                 e_vectors = e_vectors.detach()
         e_hat = e_vectors.mean(dim = 1)
 
-        feature = self.lmark_ani_encoder( torch.cat(g_in, cropped_similar_img))
+        feature = self.lmark_ani_encoder( torch.cat([g_in, cropped_similar_img],1))
         # Decode
         adain_params = self.mlp(e_hat)
         assign_adain_params(adain_params, self.decoder)
