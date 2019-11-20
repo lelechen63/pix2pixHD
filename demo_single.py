@@ -41,7 +41,7 @@ opt.serial_batches = True  # no shuffle
 
 def demo_data(opt = None, video_path = None, reference_id = None, mode = None, ani_video_path = None, reference_img_path = None):
         output_shape   = tuple([opt.loadSize, opt.loadSize])
-        num_frames = min(opt.num_frames, v_length - 2) 
+        
         transform = transforms.Compose([
             transforms.ToTensor(),
             transforms.Normalize(mean=(0.5, 0.5, 0.5), std=(0.5, 0.5, 0.5), inplace=True)])
@@ -55,6 +55,7 @@ def demo_data(opt = None, video_path = None, reference_id = None, mode = None, a
 
         # front_lmark  = np.load(video_path[:-4] + '_front.npy')[:,:,:-1]
         v_length = min(lmark.shape[0], rt.shape[0]) 
+        num_frames = min(opt.num_frames, v_length - 2) 
         target_ids = []
         for gg in range(v_length):
             target_ids.append(gg)
