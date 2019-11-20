@@ -53,7 +53,7 @@ def demo_data(opt = None, video_path = None, reference_id = None, mode = None, a
         rt = np.load(rt_path)[:,:3]
         lmark = np.load(lmark_path)[:,:,:-1]
 
-        front_lmark  = np.load(video_path[:-4] + '_front.npy')[:,:,:-1]
+        # front_lmark  = np.load(video_path[:-4] + '_front.npy')[:,:,:-1]
         v_length = min(lmark.shape[0], rt.shape[0]) 
         target_ids = []
         for gg in range(v_length):
@@ -123,7 +123,7 @@ def demo_data(opt = None, video_path = None, reference_id = None, mode = None, a
         reference_frames = torch.unsqueeze( reference_frames, 0)  
         ############################################################################
         for target_id in target_ids:
-            reference_rt_diff = reference_rts - 0 # rt[target_id]
+            reference_rt_diff = reference_rts -  rt[target_id]
             reference_rt_diff = np.absolute(reference_rt_diff)
             r_diff = np.mean(reference_rt_diff, axis =1)
             similar_id  = np.argmin(r_diff) 
