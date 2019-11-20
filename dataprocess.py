@@ -496,7 +496,7 @@ def get_animation_orignal(  obj_path= None, reference_prnet_lmark_path= None, im
         orignal_ani_path = video_path[:-4] + '_ani.mp4'
         if os.path.exists( orignal_ani_path):
             print ('=====')
-            continue
+            return 0
         if  not os.path.exists(obj_path) or not os.path.exists(reference_prnet_lmark_path) or not os.path.exists(lmark_path) or not os.path.exists(rt_path):
             print (os.path.exists(obj_path) , os.path.exists(reference_prnet_lmark_path),  os.path.exists(lmark_path), os.path.exists(rt_path))
             print (obj_path)
