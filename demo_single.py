@@ -249,7 +249,9 @@ _file.close()
 flage = False
 with torch.no_grad():
     for gg in gggdata:
+        print (gg[0])
         if gg[0] == '/mnt/Backup/lchen63/demo_videos/addition_example/id03524_2/00406.mp4':
+
             flage = True
         if flage == False:
             continue
