@@ -307,6 +307,8 @@ def get3DLmarks_single_image(image_path):
 
 
 def get3DLmarks(frame_list, v_path):
+    if os.path.exists(v_path[:-4] + '.npy'):
+        return 0
     frame_num = len(frame_list)
     lmarks = np.zeros((frame_num, 68,3))
     for i in range(frame_num):
@@ -382,6 +384,9 @@ def compute_RT(video_path):
     lmark_path = video_path[:-4] + '.npy' 
     srt_path = video_path[:-4] +  '_sRT.npy'
     front_path =video_path[:-4] +  '_front.npy'
+
+    if os.path.exists(srt_path) and os.path.exists(front_path):
+        return 0
     
     
     t_lmark = np.load(lmark_path)
@@ -739,8 +744,8 @@ def convert_folder(path):
                     print (video_path)
                     # _crop_video(video_path)
                     # video_path = video_path[:-4] +'_crop.' + i_path[-3:]
-                    # _video2img2lmark(video_path)
-                    # compute_RT(video_path)
+                    _video2img2lmark(video_path)
+                    compute_RT(video_path)
                     key_id, video_path  = compose_front(video_path)
                     gg_list.append([video_path, key_id])
                 # except:
