@@ -236,7 +236,7 @@ if not os.path.exists( os.path.join('./demo', opt.name)  ):
 model = create_model(opt)
 print(model)
 
-
+model.eval()
 visualizer = Visualizer(opt)
 # create website
 web_dir = os.path.join(opt.results_dir, opt.name, '%s_%s' % (opt.phase, opt.which_epoch))
@@ -246,53 +246,54 @@ pkl_name = os.path.join( root , 'txt','vox_audio_key_frame.pkl')
 _file = open(pkl_name, "rb")
 gggdata = pickle.load(_file)
 _file.close()
-for gg in gggdata:
-    # try:
-    v_path = gg[0]
-    reference_id = gg[1]
-    dataset = demo_data(opt =opt, video_path = v_path, reference_id =reference_id ,mode = 0)
-    # except:
-        # print (v_path)
-        # print ('+++++++++')
-        # continue
+with torch.no_grad():
+    for gg in gggdata:
+        # try:
+        v_path = gg[0]
+        reference_id = gg[1]
+        dataset = demo_data(opt =opt, video_path = v_path, reference_id =reference_id ,mode = 0)
+        # except:
+            # print (v_path)
+            # print ('+++++++++')
+            # continue
 
-    for i, data in enumerate(dataset):
-        v_id = data['v_id'].split('/')
-        if not os.path.exists( os.path.join('./demo', opt.name, v_id[-2] ) ):
-            os.mkdir(os.path.join('./demo', opt.name, v_id[-2]))
-        if not os.path.exists( os.path.join('./demo', opt.name, v_id[-2] , v_id[-1] ) ):
-            os.mkdir(os.path.join('./demo', opt.name, v_id[-2] , v_id[-1]))
-        save_path = os.path.join('./demo', opt.name,v_id[-2],v_id[-1])
-        minibatch = 1 
-        if opt.no_ani:
-            generated = model.inference(Variable(data['reference_frames']), Variable(data['target_lmark']), \
-            None,  Variable(data['target_rgb']), Variable(data['similar_frame']), Variable(data['cropped_similar_image'] ))
-        else:
-            generated = model.inference(Variable(data['reference_frames']), Variable(data['target_lmark']), \
-            Variable(data['target_ani']),  Variable(data['target_rgb']), Variable(data['similar_frame']), Variable(data['cropped_similar_image'] ))
-        
-        img = torch.cat([generated[5].data.cpu(),  generated[0].data.cpu(), data['target_rgb'], data['similar_frame']], 0)
-        torchvision.utils.save_image(img, 
-                    "{}/{:05d}.png".format(save_path,i),normalize=True)
+        for i, data in enumerate(dataset):
+            v_id = data['v_id'].split('/')
+            if not os.path.exists( os.path.join('./demo', opt.name, v_id[-2] ) ):
+                os.mkdir(os.path.join('./demo', opt.name, v_id[-2]))
+            if not os.path.exists( os.path.join('./demo', opt.name, v_id[-2] , v_id[-1] ) ):
+                os.mkdir(os.path.join('./demo', opt.name, v_id[-2] , v_id[-1]))
+            save_path = os.path.join('./demo', opt.name,v_id[-2],v_id[-1])
+            minibatch = 1 
+            if opt.no_ani:
+                generated = model.inference(Variable(data['reference_frames']), Variable(data['target_lmark']), \
+                None,  Variable(data['target_rgb']), Variable(data['similar_frame']), Variable(data['cropped_similar_image'] ))
+            else:
+                generated = model.inference(Variable(data['reference_frames']), Variable(data['target_lmark']), \
+                Variable(data['target_ani']),  Variable(data['target_rgb']), Variable(data['similar_frame']), Variable(data['cropped_similar_image'] ))
+            
+            img = torch.cat([generated[5].data.cpu(),  generated[0].data.cpu(), data['target_rgb'], data['similar_frame']], 0)
+            torchvision.utils.save_image(img, 
+                        "{}/{:05d}.png".format(save_path,i),normalize=True)
 
-        gg_name  = os.path.join('./results', opt.name + '_vox_audio')
-        if not os.path.exists(gg_name):
-            os.mkdir(gg_name)
-        if not os.path.exists(os.path.join(gg_name, v_id[-2] )):
-            os.mkdir(os.path.join(gg_name, v_id[-2] ))
+            gg_name  = os.path.join('./results', opt.name + '_vox_audio')
+            if not os.path.exists(gg_name):
+                os.mkdir(gg_name)
+            if not os.path.exists(os.path.join(gg_name, v_id[-2] )):
+                os.mkdir(os.path.join(gg_name, v_id[-2] ))
 
-        if not os.path.exists(os.path.join(gg_name, v_id[-2], v_id[-1] )):
-            os.mkdir(os.path.join(gg_name, v_id[-2] , v_id[-1]))
-        gg_name = os.path.join(gg_name, v_id[-2] , v_id[-1])
-        torchvision.utils.save_image(generated[0].data.cpu(), 
-                    "{}/{:05d}_synthesized_image.png".format(gg_name,i),normalize=True)
-        torchvision.utils.save_image(generated[2].data.cpu(), 
-                    "{}/{:05d}_face_foreground.png".format(gg_name,i),normalize=True)
-        torchvision.utils.save_image(generated[5].data.cpu(), 
-                    "{}/{:05d}_I_hat.png".format(gg_name,i),normalize=True)
-        torchvision.utils.save_image(generated[3].data.cpu(), 
-                    "{}/{:05d}_beta.png".format(gg_name,i),normalize=True)
-        torchvision.utils.save_image(generated[4].data.cpu(), 
-                    "{}/{:05d}_alpha.png".format(gg_name,i),normalize=True)
-        torchvision.utils.save_image(data['target_rgb'], 
-                    "{}/{:05d}_real_image.png".format(gg_name,i),normalize=True)
+            if not os.path.exists(os.path.join(gg_name, v_id[-2], v_id[-1] )):
+                os.mkdir(os.path.join(gg_name, v_id[-2] , v_id[-1]))
+            gg_name = os.path.join(gg_name, v_id[-2] , v_id[-1])
+            torchvision.utils.save_image(generated[0].data.cpu(), 
+                        "{}/{:05d}_synthesized_image.png".format(gg_name,i),normalize=True)
+            torchvision.utils.save_image(generated[2].data.cpu(), 
+                        "{}/{:05d}_face_foreground.png".format(gg_name,i),normalize=True)
+            torchvision.utils.save_image(generated[5].data.cpu(), 
+                        "{}/{:05d}_I_hat.png".format(gg_name,i),normalize=True)
+            torchvision.utils.save_image(generated[3].data.cpu(), 
+                        "{}/{:05d}_beta.png".format(gg_name,i),normalize=True)
+            torchvision.utils.save_image(generated[4].data.cpu(), 
+                        "{}/{:05d}_alpha.png".format(gg_name,i),normalize=True)
+            torchvision.utils.save_image(data['target_rgb'], 
+                        "{}/{:05d}_real_image.png".format(gg_name,i),normalize=True)
