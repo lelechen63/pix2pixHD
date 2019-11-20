@@ -41,7 +41,7 @@ opt.serial_batches = True  # no shuffle
 
 def demo_data(opt = None, video_path = None, reference_id = None, mode = None, ani_video_path = None, reference_img_path = None):
         output_shape   = tuple([opt.loadSize, opt.loadSize])
-        num_frames = opt.num_frames
+        num_frames = min(opt.num_frames, v_length - 2) 
         transform = transforms.Compose([
             transforms.ToTensor(),
             transforms.Normalize(mean=(0.5, 0.5, 0.5), std=(0.5, 0.5, 0.5), inplace=True)])
@@ -246,16 +246,21 @@ pkl_name = os.path.join( root , 'txt','vox_audio_key_frame.pkl')
 _file = open(pkl_name, "rb")
 gggdata = pickle.load(_file)
 _file.close()
+flage = False
 with torch.no_grad():
     for gg in gggdata:
-        # try:
-        v_path = gg[0]
-        reference_id = gg[1]
-        dataset = demo_data(opt =opt, video_path = v_path, reference_id =reference_id ,mode = 0)
-        # except:
-            # print (v_path)
-            # print ('+++++++++')
-            # continue
+        if gg[0] = '/mnt/Backup/lchen63/demo_videos/addition_example/id03524_2/00406.mp4':
+            flage = True
+        if flage == False:
+            continue
+        try:
+            v_path = gg[0]
+            reference_id = gg[1]
+            dataset = demo_data(opt =opt, video_path = v_path, reference_id =reference_id ,mode = 0)
+        except:
+            print (v_path)
+            print ('+++++++++')
+            continue
 
         for i, data in enumerate(dataset):
             v_id = data['v_id'].split('/')
