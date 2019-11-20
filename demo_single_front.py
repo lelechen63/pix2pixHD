@@ -39,23 +39,24 @@ opt.batchSize = 1  # test code only supports batchSize = 1
 opt.serial_batches = True  # no shuffle
 
 
-def demo_data_front(opt = None, video_path = None, reference_id = None, mode = None, ani_video_path = None, reference_img_path = None):
+def demo_data(opt = None, video_path = None, reference_id = None, mode = None, ani_video_path = None, reference_img_path = None):
         output_shape   = tuple([opt.loadSize, opt.loadSize])
-        
+        num_frames = opt.num_frames
         transform = transforms.Compose([
             transforms.ToTensor(),
             transforms.Normalize(mean=(0.5, 0.5, 0.5), std=(0.5, 0.5, 0.5), inplace=True)])
         v_id = video_path[:-4]
         rt_path = video_path[:-4] + '_sRT.npy'
+        front_rt_path  = video_path[:-4] + '_sRT_front.npy'
         lmark_path = video_path[:-4] + '.npy'
         # lmark_path = os.path.join(Path(video_path).parent, 'predicted_lmarks.npy')
 
         rt = np.load(rt_path)[:,:3]
+        front_rt = np.load(front_rt_path)[:,:3]
         lmark = np.load(lmark_path)[:,:,:-1]
 
-        # front_lmark  = np.load(video_path[:-4] + '_front.npy')[:,:,:-1]
+        front_lmark  = np.load(video_path[:-4] + '_front.npy')[:,:,:-1]
         v_length = min(lmark.shape[0], rt.shape[0]) 
-        num_frames = min(opt.num_frames, v_length - 2) 
         target_ids = []
         for gg in range(v_length):
             target_ids.append(gg)
@@ -98,13 +99,33 @@ def demo_data_front(opt = None, video_path = None, reference_id = None, mode = N
                 lmark_rgb = transform(lmark_rgb)
                 reference_frames[kk] = torch.cat([rgb_t, lmark_rgb],0) # (6, 256, 256)   
                 reference_rts[kk] = rt[t]
+        else:
+            real_video  = mmcv.VideoReader(video_path)
+            ani_video = mmcv.VideoReader(ani_video_path)
+            reference_frames = torch.zeros(1, 6 ,output_shape[0],output_shape[1])
+            reference_img = cv2.imread(reference_img_path)
+            lmark_t = fa.get_landmarks(reference_img)[0][:,:-1]
+            rgb_t =  mmcv.bgr2rgb(reference_img) 
+            lmark_rgb = plot_landmarks( lmark_t)
+            reference_rts = np.zeros((1, 3))
+        
+            # lmark_rgb = np.array(lmark_rgb) 
+            # resize 224 to 256
+            rgb_t  = cv2.resize(rgb_t, output_shape)
+            lmark_rgb  = cv2.resize(lmark_rgb, output_shape)
+            # to tensor
+            rgb_t = transform(rgb_t)
+            lmark_rgb = transform(lmark_rgb)
+            reference_frames[0] = torch.cat([rgb_t, lmark_rgb],0) # (6, 256, 256)   
+            reference_rts[0] = rt[0]
+
 
         input_dics = []
         similar_frame = torch.zeros( 3, output_shape[0], output_shape[0])    
         reference_frames = torch.unsqueeze( reference_frames, 0)  
         ############################################################################
         for target_id in target_ids:
-            reference_rt_diff = reference_rts -  rt[target_id]
+            reference_rt_diff = reference_rts -  front_rt[target_id]
             reference_rt_diff = np.absolute(reference_rt_diff)
             r_diff = np.mean(reference_rt_diff, axis =1)
             similar_id  = np.argmin(r_diff) 
@@ -112,8 +133,8 @@ def demo_data_front(opt = None, video_path = None, reference_id = None, mode = N
 
             target_rgb = real_video[target_id]
             target_ani = ani_video[target_id]
-            target_lmark = lmark[target_id]
-            # target_lmark = front_lmark[target_id]
+            # target_lmark = lmark[target_id]
+            target_lmark = front_lmark[target_id]
             target_rgb = mmcv.bgr2rgb(target_rgb)
             target_rgb = cv2.resize(target_rgb, output_shape)
             target_rgb = transform(target_rgb)
@@ -217,70 +238,47 @@ if not os.path.exists( os.path.join('./demo', opt.name)  ):
 model = create_model(opt)
 print(model)
 
-model.eval()
+
 visualizer = Visualizer(opt)
 # create website
 web_dir = os.path.join(opt.results_dir, opt.name, '%s_%s' % (opt.phase, opt.which_epoch))
 webpage = html.HTML(web_dir, 'Experiment = %s, Phase = %s, Epoch = %s' % (opt.name, opt.phase, opt.which_epoch))
-root = '/mnt/Backup/lchen63/demo_videos'
-pkl_name = os.path.join( root , 'txt','vox_audio_key_frame.pkl')
+
+pkl_name = os.path.join( '/home/cxu-serve/p1/lchen63/voxceleb/txt','vox_audio_key_frame.pkl')
 _file = open(pkl_name, "rb")
 gggdata = pickle.load(_file)
 _file.close()
-# flage = False
-with torch.no_grad():
-    for gg in gggdata:
-        print (gg[0])
-        # if gg[0] == '/mnt/Backup/lchen63/demo_videos/addition_example/id03524_2/00406.mp4':
-        #     flage = True
-        # if flage == False:
-        #     continue
-        # try:
-        v_path = gg[0]
-        reference_id = gg[1]
-        dataset = demo_data_front(opt =opt, video_path = v_path, reference_id =reference_id ,mode = 0)
-        # except:
-        #     print (v_path)
-        #     print ('+++++++++')
-        #     continue
+for gg in gggdata:
+    # try:
+    v_path = gg[0]
+    reference_id = gg[1]
+    dataset = demo_data(opt =opt, video_path = v_path, reference_id =reference_id ,mode = 0)
+    # except:
+        # print (v_path)
+        # print ('+++++++++')
+        # continue
 
-        for i, data in enumerate(dataset):
-            v_id = data['v_id'].split('/')
-            if not os.path.exists( os.path.join('./demo', opt.name, v_id[-2] ) ):
-                os.mkdir(os.path.join('./demo', opt.name, v_id[-2]))
-            if not os.path.exists( os.path.join('./demo', opt.name, v_id[-2] , v_id[-1] ) ):
-                os.mkdir(os.path.join('./demo', opt.name, v_id[-2] , v_id[-1]))
-            save_path = os.path.join('./demo', opt.name,v_id[-2],v_id[-1])
-            minibatch = 1 
-            if opt.no_ani:
-                generated = model.inference(Variable(data['reference_frames']), Variable(data['target_lmark']), \
-                None,  Variable(data['target_rgb']), Variable(data['similar_frame']), Variable(data['cropped_similar_image'] ))
-            else:
-                generated = model.inference(Variable(data['reference_frames']), Variable(data['target_lmark']), \
-                Variable(data['target_ani']),  Variable(data['target_rgb']), Variable(data['similar_frame']), Variable(data['cropped_similar_image'] ))
-            
-            img = torch.cat([generated[5].data.cpu(),  generated[0].data.cpu(), data['target_rgb'], data['similar_frame']], 0)
-            torchvision.utils.save_image(img, 
-                        "{}/{:05d}.png".format(save_path,i),normalize=True)
+    for i, data in enumerate(dataset):
+        v_id = data['v_id'].split('/')[-1]
+        if not os.path.exists( os.path.join('./demo', opt.name, v_id ) ):
+            os.mkdir(os.path.join('./demo', opt.name, v_id))
+        save_path = os.path.join('./demo', opt.name,v_id)
+        minibatch = 1 
+        if opt.no_ani:
+            generated = model.inference(Variable(data['reference_frames']), Variable(data['target_lmark']), \
+            None,  Variable(data['target_rgb']), Variable(data['similar_frame']), Variable(data['cropped_similar_image'] ))
+        else:
+            generated = model.inference(Variable(data['reference_frames']), Variable(data['target_lmark']), \
+            Variable(data['target_ani']),  Variable(data['target_rgb']), Variable(data['similar_frame']), Variable(data['cropped_similar_image'] ))
+        
+        img = torch.cat([generated[5].data.cpu(),  generated[0].data.cpu(), data['target_rgb'], data['similar_frame']], 0)
+        torchvision.utils.save_image(img, 
+                    "{}/{:05d}.png".format(save_path,i),normalize=True)
 
-            gg_name  = os.path.join('./results', opt.name + '_vox_audio')
-            if not os.path.exists(gg_name):
-                os.mkdir(gg_name)
-            if not os.path.exists(os.path.join(gg_name, v_id[-2] )):
-                os.mkdir(os.path.join(gg_name, v_id[-2] ))
-
-            if not os.path.exists(os.path.join(gg_name, v_id[-2], v_id[-1] )):
-                os.mkdir(os.path.join(gg_name, v_id[-2] , v_id[-1]))
-            gg_name = os.path.join(gg_name, v_id[-2] , v_id[-1])
-            torchvision.utils.save_image(generated[0].data.cpu(), 
-                        "{}/{:05d}_synthesized_image.png".format(gg_name,i),normalize=True)
-            torchvision.utils.save_image(generated[2].data.cpu(), 
-                        "{}/{:05d}_face_foreground.png".format(gg_name,i),normalize=True)
-            torchvision.utils.save_image(generated[5].data.cpu(), 
-                        "{}/{:05d}_I_hat.png".format(gg_name,i),normalize=True)
-            torchvision.utils.save_image(generated[3].data.cpu(), 
-                        "{}/{:05d}_beta.png".format(gg_name,i),normalize=True)
-            torchvision.utils.save_image(generated[4].data.cpu(), 
-                        "{}/{:05d}_alpha.png".format(gg_name,i),normalize=True)
-            torchvision.utils.save_image(data['target_rgb'], 
-                        "{}/{:05d}_real_image.png".format(gg_name,i),normalize=True)
+        gg_name  = os.path.join('./results', opt.name + '_vox_audio')
+        if not os.path.exists(gg_name):
+            os.mkdir(gg_name)
+        torchvision.utils.save_image(generated[0].data.cpu(), 
+                    "{}/{}_{:05d}_synthesized_image.png".format(gg_name,v_id,i),normalize=True)
+        torchvision.utils.save_image(data['target_rgb'], 
+                    "{}/{}_{:05d}_real_image.png".format(gg_name,v_id,i),normalize=True)
