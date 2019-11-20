@@ -251,18 +251,17 @@ with torch.no_grad():
     for gg in gggdata:
         print (gg[0])
         if gg[0] == '/mnt/Backup/lchen63/demo_videos/addition_example/id03524_2/00406.mp4':
-
             flage = True
         if flage == False:
             continue
-        try:
-            v_path = gg[0]
-            reference_id = gg[1]
-            dataset = demo_data(opt =opt, video_path = v_path, reference_id =reference_id ,mode = 0)
-        except:
-            print (v_path)
-            print ('+++++++++')
-            continue
+        # try:
+        v_path = gg[0]
+        reference_id = gg[1]
+        dataset = demo_data(opt =opt, video_path = v_path, reference_id =reference_id ,mode = 0)
+        # except:
+        #     print (v_path)
+        #     print ('+++++++++')
+        #     continue
 
         for i, data in enumerate(dataset):
             v_id = data['v_id'].split('/')
