@@ -793,7 +793,7 @@ def convert_folde2test(path):
 # lrw_img2vid('/home/cxu-serve/p1/lchen63/voxceleb/unzip/lrw_test')
 # convert_folde2test('/home/cxu-serve/p1/lchen63/voxceleb/unzip/vox1_test')
 root = '/mnt/Backup/lchen63/demo_videos'
-convert_folder( os.path.join(root, 'addition_example'))
+# convert_folder( os.path.join(root, 'addition_example'))
 get_animation_pickle()
 # root = '/home/cxu-serve/p1/lchen63/voxceleb'
 # root = '/data2/lchen63/voxceleb'
